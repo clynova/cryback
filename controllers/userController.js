@@ -83,8 +83,10 @@ const autenticar = async (req, res) => {
             });
         }
 
-        const token = generarJWT(usuarioExistente._id, usuarioExistente.email)
+        console.log(`aca`);
 
+        const token = generarJWT(usuarioExistente._id, usuarioExistente.email)
+        
         res.status(200).send({
             success: true,
             msg: "Autenticación exitosa",
