@@ -10,6 +10,6 @@ const orderDetailSchema = new mongoose.Schema(
     { timestamps: true } // Agrega automáticamente createdAt y updatedAt
 );
 
-const OrderDetail = mongoose.model("OrderDetail", orderDetailSchema);
+const OrderDetail = mongoose.model("order_details", orderDetailSchema);
 
 export { OrderDetail };
