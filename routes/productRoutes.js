@@ -5,7 +5,7 @@ const productRoutes = express.Router();
 
 productRoutes.get('/', productos)
 productRoutes.post('/', validateProductRegistration, crearProducto)
-productRoutes.put('/', validateProductModificar, modificarProducto)
+productRoutes.put('/:_id', validateProductModificar, modificarProducto)
 productRoutes.delete('/:_id', validateProductID, eliminarProducto);
 
 

@@ -56,7 +56,8 @@ const modificarProducto = async (req, res) => {
             return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        const { _id, name, description, price, images, categoryId, stock, brandId, modelId } = req.body;
+        const { _id } = req.params; 
+        const { name, description, price, images, categoryId, stock, brandId, modelId } = req.body;
 
 
 
