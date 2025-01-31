@@ -12,9 +12,9 @@ const checkAuth = async (req, res, next) => {
 
         // Si no hay token, devolver un error
         if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                msg: 'Acceso denegado: No se proporcionó un token' 
+            return res.status(401).json({
+                success: false,
+                msg: 'Acceso denegado: No se proporcionó un token'
             });
         }
 
@@ -22,13 +22,24 @@ const checkAuth = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // Buscar el usuario en la base de datos
-        const user = await User.findById(decoded._id).select("-password -token -confirmado");
+        const user = await User.findById(decoded._id).select("-password -token");
+
         if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                msg: 'Acceso denegado: Usuario no encontrado' 
+            return res.status(404).json({
+                success: false,
+                msg: 'Acceso denegado: Usuario no encontrado'
             });
         }
+
+        // Verificar si el usuario esta confirmado
+        if (!user.confirmado) {
+            return res.status(403).json({
+                success: false,
+                msg: 'Acceso denegado: Usuario no confirmado'
+            });
+        }
+
+
 
         // Adjuntar el usuario al objeto `req` para usarlo en el controlador
         req.user = user;
@@ -38,24 +49,32 @@ const checkAuth = async (req, res, next) => {
         console.error("Error en checkAuth:", err);
 
         if (err.name === 'JsonWebTokenError') {
-            return res.status(403).json({ 
-                success: false, 
-                msg: 'Token inválido' 
+            return res.status(403).json({
+                success: false,
+                msg: 'Token inválido'
             });
         }
 
         if (err.name === 'TokenExpiredError') {
-            return res.status(403).json({ 
-                success: false, 
-                msg: 'Token expirado, por favor inicie sesión nuevamente' 
+            return res.status(403).json({
+                success: false,
+                msg: 'Token expirado, por favor inicie sesión nuevamente'
             });
         }
 
-        return res.status(500).json({ 
-            success: false, 
-            msg: 'Error en la autenticación' 
+        return res.status(500).json({
+            success: false,
+            msg: 'Error en la autenticación'
         });
     }
 };
 
-export { checkAuth };
+const checkRole = (role) => (req, res, next) => {
+    if (!req.user.roles.includes(role)) {
+        return res.status(403).json({ success: false, msg: 'No tienes permisos para realizar esta acción' });
+    }
+    next();
+};
+
+
+export { checkAuth, checkRole };

@@ -7,9 +7,9 @@ const orderDetailSchema = new mongoose.Schema(
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
     },
-    { timestamps: true } // Agrega automáticamente createdAt y updatedAt
+    { timestamps: true, collection: 'order_details' } // Agrega automáticamente createdAt y updatedAt
 );
 
-const OrderDetail = mongoose.model("order_details", orderDetailSchema);
+const OrderDetail = mongoose.model("OrderDetail", orderDetailSchema);
 
 export { OrderDetail };

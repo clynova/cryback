@@ -89,4 +89,35 @@ const createOrder = async (req, res) => {
     }
 };
 
-export { createOrder };
+
+const getUserOrders = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Obtener las órdenes del usuario
+        const orders = await Order.find({ userId });
+
+        // Obtener los detalles de los productos para cada orden
+        const ordersWithDetails = await Promise.all(
+            orders.map(async (order) => {
+                const orderDetails = await OrderDetail.find({ orderId: order._id }).populate('productId');
+                console.log(orderDetails)
+                return {
+                    ...order.toObject(), // Convertir el documento de Mongoose a un objeto plano
+                    products: orderDetails.map(detail => ({
+                        productId: detail.productId,
+                        quantity: detail.quantity,
+                        price: detail.price,
+                    })),
+                };
+            })
+        );
+
+        res.status(200).json({ success: true, orders: ordersWithDetails });
+    } catch (err) {
+        console.error("Error al obtener las órdenes del usuario:", err);
+        res.status(500).json({ success: false, msg: "Error al obtener las órdenes del usuario" });
+    }
+};
+
+export { createOrder, getUserOrders };
