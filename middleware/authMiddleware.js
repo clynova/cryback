@@ -39,8 +39,6 @@ const checkAuth = async (req, res, next) => {
             });
         }
 
-
-
         // Adjuntar el usuario al objeto `req` para usarlo en el controlador
         req.user = user;
         next();
@@ -77,4 +75,28 @@ const checkRole = (role) => (req, res, next) => {
 };
 
 
-export { checkAuth, checkRole };
+const checkOwnerOrAdmin = (Model, idField = "_id") => async (req, res, next) => {
+    try {
+        const resourceId = req.params[idField]; // ID desde la URL
+        const userId = req.user._id; // ID del usuario autenticado
+
+        // Buscar el recurso en la base de datos (puede ser un Cart, Order o User)
+        const resource = await Model.findById(resourceId);
+
+        if (!resource) {
+            return res.status(404).json({ success: false, msg: "Recurso no encontrado" });
+        }
+
+        // Si el usuario no es dueño del recurso y no es admin, bloquear
+        if (resource.userId.toString() !== userId.toString() && !req.user.roles.includes("admin")) {
+            return res.status(403).json({ success: false, msg: "No tienes permiso para realizar esta acción" });
+        }
+
+        next(); // Si pasa la validación, continuar con la siguiente función
+    } catch (err) {
+        console.error("Error en checkOwnerOrAdmin:", err);
+        res.status(500).json({ success: false, msg: "Error al verificar permisos" });
+    }
+};
+
+export { checkAuth, checkRole, checkOwnerOrAdmin };

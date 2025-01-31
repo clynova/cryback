@@ -2,7 +2,7 @@ import { Product } from "../models/Product.js";
 import { Category } from "../models/Category.js";
 import { validationResult } from 'express-validator';
 
-const productos = async (req, res) => {
+const products = async (req, res) => {
     try {
         const productos = await Product.find();
         res.status(200).send({ success: true, msg: 'Productos enviados', productos });
@@ -12,7 +12,21 @@ const productos = async (req, res) => {
     }
 };
 
-const crearProducto = async (req, res) => {
+const getProduct = async (req, res) => {
+    try {
+        const { _id } = req.params;
+        const product = await Product.findById(_id);
+        if (!product) {
+            return res.status(404).send({ success: false, msg: "El producto no existe" });
+        }
+        res.status(200).send({ success: true, msg: 'Producto enviado', product });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ success: false, msg: "Error al obtener el producto" });
+    }
+};
+
+const createProduct = async (req, res) => {
     try {
         // Validar errores de entrada
         const errors = validationResult(req);
@@ -49,14 +63,14 @@ const crearProducto = async (req, res) => {
     }
 };
 
-const modificarProducto = async (req, res) => {
+const updateProduct = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        const { _id } = req.params; 
+        const { _id } = req.params;
         const { name, description, price, images, categoryId, stock, brandId, modelId } = req.body;
 
 
@@ -98,7 +112,7 @@ const modificarProducto = async (req, res) => {
 
 
 
-const eliminarProducto = async (req, res) => {
+const deleteProduct = async (req, res) => {
     try {
 
         const errors = validationResult(req);
@@ -131,4 +145,4 @@ const eliminarProducto = async (req, res) => {
 };
 
 
-export { productos, crearProducto, modificarProducto, eliminarProducto }
+export { products, getProduct, createProduct, updateProduct, deleteProduct }

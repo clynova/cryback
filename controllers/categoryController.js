@@ -1,7 +1,7 @@
 import { Category } from "../models/Category.js";
 import { validationResult } from 'express-validator';
 
-const categorias = async (req, res) => {
+const categories = async (req, res) => {
     try {
         const categorias = await Category.find()
 
@@ -11,7 +11,7 @@ const categorias = async (req, res) => {
     }
 }
 
-const crearCategoria = async (req, res) => {
+const createCategory = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -34,7 +34,7 @@ const crearCategoria = async (req, res) => {
     }
 }
 
-const modificarCategoria = async (req, res) => {
+const updateCategory = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -62,7 +62,7 @@ const modificarCategoria = async (req, res) => {
     }
 }
 
-const eliminarCategoria = async (req, res) => {
+const deleteCategory = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -87,4 +87,4 @@ const eliminarCategoria = async (req, res) => {
     }
 };
 
-export { categorias, crearCategoria, modificarCategoria, eliminarCategoria }
+export { categories, createCategory, updateCategory, deleteCategory }
