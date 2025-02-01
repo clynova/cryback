@@ -155,6 +155,23 @@ const nuevoPassword = async (req, res) => {
     }
 };
 
+const updateProfile = async (req, res) => {
+
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).send({ success: false, msg: "Errores de validación", errors: errors.array() });
+        }
+
+        
+
+    } catch(err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al actualizar el perfil" });
+    }
+
+}
 
 
-export { registrar, perfil, confirmar, autenticar, resetPassword, comprobarToken, nuevoPassword };
+
+
+export { registrar, perfil, confirmar, autenticar, resetPassword, comprobarToken, nuevoPassword, updateProfile };
