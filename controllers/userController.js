@@ -168,7 +168,13 @@ const updateProfile = async (req, res) => {
 
         let user;
 
+
         if (idUserAdminEdit) {
+            const adminUser = await User.findById(userId);
+            if (!adminUser.roles.includes("admin")) {
+                return res.status(403).send({ success: false, msg: "No tienes permisos para editar este usuario" });
+            }
+
             user = await User.findById(idUserAdminEdit);
             if (!user) {
                 return res.status(404).send({ success: false, msg: "El usuario no existe" });
@@ -195,18 +201,80 @@ const updateProfile = async (req, res) => {
         await user.save();
 
         res.status(200).send({ success: true, msg: "Perfil actualizado correctamente" });
-
-
-
-
-
     } catch (err) {
         res.status(500).send({ success: false, msg: "Hubo un error al actualizar el perfil" });
     }
 
 }
 
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, repNewPassword } = req.body;
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "El usuario no existe" });
+        }
+
+        if (newPassword !== repNewPassword) {
+            return res.status(400).send({ success: false, msg: "Las contraseñas no coinciden" });
+        }
 
 
+        const passwordValido = await user.comprobarPassword(currentPassword)
+        if (!passwordValido) {
+            return res.status(400).send({
+                success: false,
+                msg: "Credenciales incorrectas"
+            });
+        }
 
-export { registrar, perfil, confirmar, autenticar, resetPassword, comprobarToken, nuevoPassword, updateProfile };
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).send({ success: true, msg: "Contraseya actualizada correctamente" });
+    }
+    catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al cambiar la contraseña" });
+    }
+}
+
+const deleteAccount = async (req, res) => {
+    try {
+        const { userId } = req.params; // ID del usuario a eliminar
+        const requestingUserId = req.user._id; // ID del usuario que hace la solicitud (obtenido del token)
+        let log;
+
+
+        // Verificar si el usuario que hace la solicitud existe
+        const requestingUser = await User.findById(requestingUserId);
+        if (!requestingUser) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+
+        // Verificar si el usuario a eliminar existe
+        const userToDelete = await User.findById(userId);
+        if (!userToDelete) {
+            return res.status(404).send({ success: false, msg: "El usuario a eliminar no existe" });
+        }
+
+        // Si el usuario no es admin, solo puede eliminar su propia cuenta
+        if (!requestingUser.roles.includes('admin') && requestingUserId.toString() !== userId.toString()) {
+            return res.status(403).send({ success: false, msg: "No tienes permisos para eliminar esta cuenta" });
+        }
+
+        log = `Usuario ${userToDelete.username} con ID ${userToDelete._id} eliminado por ${requestingUser.username} con ID ${requestingUserId} con el rol ${requestingUser.roles}.`;
+
+        // Eliminar la cuenta
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).send({ success: true, msg: "Cuenta eliminada correctamente", log });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al eliminar la cuenta" });
+    }
+};
+
+
+export { registrar, perfil, confirmar, autenticar, resetPassword, comprobarToken, nuevoPassword, updateProfile, changePassword, deleteAccount };
