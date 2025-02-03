@@ -5,7 +5,7 @@ import { generarJWT } from "../helpers/generarJWT.js";
 
 const registrar = async (req, res) => {
     try {
-        
+
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).send({ success: false, msg: "Errores de validación", errors: errors.array() });
@@ -86,7 +86,7 @@ const autenticar = async (req, res) => {
         console.log(`aca`);
 
         const token = generarJWT(usuarioExistente._id, usuarioExistente.email)
-        
+
         res.status(200).send({
             success: true,
             msg: "Autenticación exitosa",
@@ -163,9 +163,43 @@ const updateProfile = async (req, res) => {
             return res.status(400).send({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        
+        const { firstName, lastName, email, address, phone } = req.body;
+        const userId = req.user._id;
 
-    } catch(err) {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "El usuario no existe" });
+        }
+
+        if (firstName) {
+            user.firstName = firstName;
+        }
+        if (lastName) {
+            user.lastName = lastName;
+        }
+        if (email) {            
+            const emailExists = await User.findOne({ email, _id: { $ne: userId } });
+            if (emailExists) {
+                return res.status(400).json({ success: false, msg: "El correo ya está en uso" });
+            }
+            user.email = email;
+        }
+        if (address) {
+            user.address = address;
+        }
+        if (phone) {
+            user.phone = phone;
+        }
+
+        await user.save();
+
+        res.status(200).send({ success: true, msg: "Perfil actualizado correctamente" });
+
+
+
+
+
+    } catch (err) {
         res.status(500).send({ success: false, msg: "Hubo un error al actualizar el perfil" });
     }
 
