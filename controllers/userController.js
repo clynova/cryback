@@ -163,33 +163,34 @@ const updateProfile = async (req, res) => {
             return res.status(400).send({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        const { firstName, lastName, email, address, phone } = req.body;
+        const { idUserAdminEdit, firstName, lastName, email, address, phone } = req.body;
         const userId = req.user._id;
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send({ success: false, msg: "El usuario no existe" });
+        let user;
+
+        if (idUserAdminEdit) {
+            user = await User.findById(idUserAdminEdit);
+            if (!user) {
+                return res.status(404).send({ success: false, msg: "El usuario no existe" });
+            }
+        } else {
+            user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).send({ success: false, msg: "El usuario no existe" });
+            }
         }
 
-        if (firstName) {
-            user.firstName = firstName;
-        }
-        if (lastName) {
-            user.lastName = lastName;
-        }
-        if (email) {            
+        if (firstName) user.firstName = firstName;
+        if (lastName) user.lastName = lastName;
+        if (email) {
             const emailExists = await User.findOne({ email, _id: { $ne: userId } });
             if (emailExists) {
                 return res.status(400).json({ success: false, msg: "El correo ya está en uso" });
             }
             user.email = email;
         }
-        if (address) {
-            user.address = address;
-        }
-        if (phone) {
-            user.phone = phone;
-        }
+        if (address) user.address = address;
+        if (phone) user.phone = phone;
 
         await user.save();
 
