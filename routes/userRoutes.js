@@ -19,7 +19,8 @@ import {
     validarNuevaPassword,
     validarCambiarPassword
 } from '../middleware/validators/userValidators.js';
-import { checkAuth, checkTokenBlacklist } from '../middleware/authMiddleware.js';
+import { checkAuth, checkTokenBlacklist, checkRole, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
+import { User } from '../models/User.js';
 
 const userRoutes = express.Router();
 
@@ -37,13 +38,13 @@ userRoutes.post('/reset-password/:token', validarNuevaPassword, nuevoPassword); 
 userRoutes.use(checkAuth, checkTokenBlacklist); // Middleware aplicado a todas las rutas siguientes
 
 userRoutes.get('/perfil', getUserById); // Obtener perfil del usuario autenticado
-userRoutes.get('/perfil/:userId', getUserById); // Obtener perfil de un usuario específico (solo para administradores)
+userRoutes.get('/perfil/:userId',  getUserById); // Obtener perfil de un usuario específico (solo para administradores)
 userRoutes.put('/perfil', updateProfile); // Actualizar perfil del usuario autenticado
 userRoutes.put('/change-password', validarCambiarPassword, changePassword); // Cambiar contraseña del usuario autenticado
 userRoutes.delete('/delete-account/:userId', deleteAccount); // Eliminar cuenta (propia o de otro usuario si es admin)
 
 // Rutas de administración (solo para administradores)
-userRoutes.get('/all', getAllUsers); // Obtener todos los usuarios (solo para administradores)
+userRoutes.get('/all', checkRole('admin'), getAllUsers); // Obtener todos los usuarios (solo para administradores)
 
 // Cerrar sesión
 userRoutes.post('/logout', logout); // Cerrar sesión e invalidar token

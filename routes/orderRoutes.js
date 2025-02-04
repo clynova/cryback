@@ -1,12 +1,11 @@
 import express from 'express';
 import { createOrder, getUserOrders } from '../controllers/orderController.js';
-import { checkAuth } from '../middleware/authMiddleware.js';
+import { checkAuth, checkTokenBlacklist } from '../middleware/authMiddleware.js';
 import { validateOrder } from '../middleware/validators/orderValidators.js';
 
 const orderRoutes = express.Router();
 
-orderRoutes.post('/', checkAuth, validateOrder, createOrder);
-orderRoutes.get('/', checkAuth, getUserOrders);
+orderRoutes.post('/', checkAuth, checkTokenBlacklist, validateOrder, createOrder);
+orderRoutes.get('/', checkAuth, checkTokenBlacklist, getUserOrders);
 
 export { orderRoutes };
-     

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { TokenBlacklist } from '../models/TokenBlacklist.js';
 
-const checkAuth = async (req, res, next) => {
+const  checkAuth = async (req, res, next) => {
     try {
         let token;
 
@@ -81,8 +81,11 @@ const checkOwnerOrAdmin = (Model, idField = "_id") => async (req, res, next) => 
         const resourceId = req.params[idField]; // ID desde la URL
         const userId = req.user._id; // ID del usuario autenticado
 
+        console.log(resourceId, userId)
         // Buscar el recurso en la base de datos (puede ser un Cart, Order o User)
         const resource = await Model.findById(resourceId);
+
+        console.log(resource)
 
         if (!resource) {
             return res.status(404).json({ success: false, msg: "Recurso no encontrado" });

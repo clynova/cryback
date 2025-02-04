@@ -273,14 +273,6 @@ const deleteAccount = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
     try {
-        const requestingUserId = req.user._id;
-
-        // Verificar si el usuario que hace la solicitud es un administrador
-        const requestingUser = await User.findById(requestingUserId);
-        if (!requestingUser || !requestingUser.roles.includes('admin')) {
-            return res.status(403).send({ success: false, msg: "No tienes permisos para realizar esta acción" });
-        }
-
         const users = await User.find();
         res.status(200).send({ success: true, data: users });
     } catch (err) {
