@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { TokenBlacklist } from '../models/TokenBlacklist.js';
 
 const checkAuth = async (req, res, next) => {
     try {
@@ -99,4 +100,25 @@ const checkOwnerOrAdmin = (Model, idField = "_id") => async (req, res, next) => 
     }
 };
 
-export { checkAuth, checkRole, checkOwnerOrAdmin };
+
+
+const checkTokenBlacklist = async (req, res, next) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) {
+            return res.status(401).send({ success: false, msg: "Acceso denegado. No hay token proporcionado." });
+        }
+
+        // Verificar si el token está en la lista negra
+        const tokenInBlacklist = await TokenBlacklist.findOne({ token });
+        if (tokenInBlacklist) {
+            return res.status(401).send({ success: false, msg: "Token inválido. Sesión cerrada." });
+        }
+
+        next();
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al verificar el token" });
+    }
+};
+
+export { checkAuth, checkRole, checkOwnerOrAdmin, checkTokenBlacklist };

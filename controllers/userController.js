@@ -1,4 +1,5 @@
 import { User } from "../models/User.js";
+import { TokenBlacklist } from "../models/TokenBlacklist.js";
 import { generarId } from '../helpers/generarId.js';
 import { validationResult } from 'express-validator';
 import { generarJWT } from "../helpers/generarJWT.js";
@@ -83,8 +84,6 @@ const autenticar = async (req, res) => {
             });
         }
 
-        console.log(`aca`);
-
         const token = generarJWT(usuarioExistente._id, usuarioExistente.email)
 
         res.status(200).send({
@@ -104,10 +103,6 @@ const autenticar = async (req, res) => {
         res.status(500).send({ success: false, msg: "Hubo un error al autenticar el usuario" });
     }
 }
-
-const perfil = (req, res) => {
-    res.status(201).send({ success: true, msg: 'Perfil de usuario', user: req.user });
-};
 
 const resetPassword = async (req, res) => {
 
@@ -276,5 +271,82 @@ const deleteAccount = async (req, res) => {
     }
 };
 
+const getAllUsers = async (req, res) => {
+    try {
+        const requestingUserId = req.user._id;
 
-export { registrar, perfil, confirmar, autenticar, resetPassword, comprobarToken, nuevoPassword, updateProfile, changePassword, deleteAccount };
+        // Verificar si el usuario que hace la solicitud es un administrador
+        const requestingUser = await User.findById(requestingUserId);
+        if (!requestingUser || !requestingUser.roles.includes('admin')) {
+            return res.status(403).send({ success: false, msg: "No tienes permisos para realizar esta acción" });
+        }
+
+        const users = await User.find();
+        res.status(200).send({ success: true, data: users });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al obtener los usuarios" });
+    }
+}
+
+const getUserById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const requestingUserId = req.user._id;
+
+        // Verificar si el usuario que hace la solicitud es un administrador o el propio usuario
+        const requestingUser = await User.findById(requestingUserId);
+        if (!requestingUser || (!requestingUser.roles.includes('admin') && requestingUserId.toString() !== userId.toString())) {
+            return res.status(403).send({ success: false, msg: "No tienes permisos para realizar esta acción" });
+        }
+
+        // Obtener el usuario
+        const user = await User.findById(userId, { password: 0, token: 0 }); // Excluir campos sensibles
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        res.status(200).send({ success: true, data: user });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al obtener el usuario" });
+    }
+};
+
+const logout = async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) {
+            return res.status(400).send({ success: false, msg: "Token no proporcionado" });
+        }
+
+        // Verificar si el token ya está en la lista negra
+        const tokenExists = await TokenBlacklist.findOne({ token });
+        if (tokenExists) {
+            return res.status(400).send({ success: false, msg: "El token ya ha sido invalidado" });
+        }
+
+        // Agregar el token a la lista negra
+        await TokenBlacklist.create({ token });
+
+        res.status(200).send({ success: true, msg: "Sesión cerrada correctamente" });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al cerrar la sesión" });
+    }
+};
+
+
+
+
+export {
+    registrar,
+    confirmar,
+    autenticar,
+    resetPassword,
+    comprobarToken,
+    nuevoPassword,
+    updateProfile,
+    changePassword,
+    deleteAccount,
+    getAllUsers,
+    getUserById,
+    logout
+};
