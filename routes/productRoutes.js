@@ -3,6 +3,16 @@ import { products, getProduct, createProduct, updateProduct, deleteProduct } fro
 import { validateProductRegistration, validateProductModificar, validateProductID } from '../middleware/validators/productValidators.js';
 import { checkAuth, checkRole, checkTokenBlacklist } from '../middleware/authMiddleware.js';
 
+/*import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minuto
+    max: 5, // Limitar cada IP a 5 solicitudes por minuto
+    message: 'Too many requests from this IP, please try again after a minute'
+});
+
+*/
+
 const productRoutes = express.Router();
 
 productRoutes.get('/', products)
