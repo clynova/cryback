@@ -4,8 +4,8 @@ import { validationResult } from 'express-validator';
 
 const products = async (req, res) => {
     try {
-        const productos = await Product.find();
-        res.status(200).send({ success: true, msg: 'Productos enviados', productos });
+        const products = await Product.find();
+        res.status(200).send({ success: true, msg: 'Productos enviados', products });
     } catch (err) {
         console.error(err);
         res.status(500).send({ success: false, msg: "Error al obtener los productos" });
