@@ -26,7 +26,7 @@ const userRoutes = express.Router();
 
 // Rutas públicas (no requieren autenticación)
 userRoutes.post('/registrar', validateUserRegistration, registrar); // Registrar un nuevo usuario
-userRoutes.get('/confirmar/:token', confirmar); // Confirmar cuenta de usuario
+userRoutes.post('/confirmar', confirmar); // Cambio de GET a POST para recibir email y token
 userRoutes.post('/autenticar', validarAutenticar, autenticar); // Autenticar usuario (login)
 
 // Rutas para restablecer contraseña

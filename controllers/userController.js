@@ -1,8 +1,9 @@
 import { User } from "../models/User.js";
 import { TokenBlacklist } from "../models/TokenBlacklist.js";
-import { generarId } from '../helpers/generarId.js';
+import { generarCodigo } from "../helpers/generarCodigo.js";
 import { validationResult } from 'express-validator';
 import { generarJWT } from "../helpers/generarJWT.js";
+import { generarId } from "../helpers/generarId.js";
 
 const registrar = async (req, res) => {
     try {
@@ -17,7 +18,7 @@ const registrar = async (req, res) => {
             return res.status(400).send({ success: false, msg: "El correo ya está registrado" });
         }
 
-        req.body.token = generarId();
+        req.body.token = generarCodigo();
         const user = new User(req.body);
         const userGuardado = await user.save();
 
@@ -43,18 +44,49 @@ const registrar = async (req, res) => {
 
 const confirmar = async (req, res) => {
     try {
-        const usuarioExistente = await User.findOne({ token: req.params.token });
-        if (!usuarioExistente) {
-            return res.status(400).send({ msg: "El token no es valido" });
+        const { email, token } = req.body;
+
+        // Validar que se reciban ambos campos
+        if (!email || !token) {
+            return res.status(400).send({ 
+                success: false, 
+                msg: "Se requiere email y token para la confirmación" 
+            });
         }
 
-        usuarioExistente.token = null
-        usuarioExistente.confirmado = true
-        await usuarioExistente.save()
+        // Buscar usuario por email y token
+        const usuario = await User.findOne({ 
+            email: email,
+            token: token,
+            confirmado: false // Aseguramos que no esté ya confirmado
+        });
 
-        res.status(201).send({ success: true, msg: "Usuario confirmado correctamente." });
+        if (!usuario) {
+            return res.status(400).send({ 
+                success: false, 
+                msg: "Token inválido o usuario ya confirmado" 
+            });
+        }
+
+        // Confirmar usuario
+        usuario.token = null;
+        usuario.confirmado = true;
+        await usuario.save();
+
+        res.status(200).send({ 
+            success: true, 
+            msg: "Usuario confirmado correctamente",
+            data: {
+                email: usuario.email,
+                confirmado: usuario.confirmado
+            }
+        });
     } catch (err) {
-        res.status(500).send({ success: false, msg: "Hubo un error al validar el token del usuario" });
+        console.error("Error en confirmación:", err);
+        res.status(500).send({ 
+            success: false, 
+            msg: "Error al confirmar usuario" 
+        });
     }
 };
 
