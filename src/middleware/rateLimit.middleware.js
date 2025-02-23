@@ -15,7 +15,7 @@ const limiter = rateLimit({
             path: req.path,
             headers: req.headers
         });
-        res.status(429).json(options.message);
+        res.status().json(options.message);
     },
     standardHeaders: true, // Retorna `RateLimit-*` headers
     legacyHeaders: false, // Deshabilita los headers `X-RateLimit-*`

@@ -4,14 +4,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/user/registrar', 
             description: 'Registrar nuevo usuario',
-            info: 'Envia un JSON con name, email y password.',
-            params: {
-                firstName: { type: 'string', required: true, desc: 'Nombre del usuario' },
-                lastName: { type: 'string', required: true, desc: 'Apellido del usuario' },
-                email: { type: 'string', required: true, desc: 'Correo electrónico' },
-                password: { type: 'string', required: true, desc: 'Contraseña (mín. 8 caracteres)' },
-                repPassword: { type: 'string', required: true, desc: 'Confirmación de contraseña' }
-            }
+            info: 'Envia un JSON con name, email y password.'
         },
         { 
             method: 'GET', 
@@ -23,20 +16,13 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/user/autenticar', 
             description: 'Iniciar sesión',
-            info: 'Envia un JSON con email y password.',
-            params: {
-                email: { type: 'string', required: true, desc: 'Correo electrónico' },
-                password: { type: 'string', required: true, desc: 'Contraseña' }
-            }
+            info: 'Envia un JSON con email y password.'
         },
         { 
             method: 'POST', 
             path: '/api/user/reset-password', 
             description: 'Solicitar restablecimiento de contraseña',
-            info: 'Envia email con instrucciones.',
-            params: {
-                email: { type: 'string', required: true, desc: 'Correo electrónico registrado' }
-            }
+            info: 'Envia email con instrucciones.'
         },
         { 
             method: 'GET', 
@@ -104,11 +90,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/category', 
             description: 'Crear nueva categoría',
-            info: 'Envia un JSON con name y descripción opcional.',
-            params: {
-                name: { type: 'string', required: true, desc: 'Nombre de la categoría' },
-                description: { type: 'string', required: false, desc: 'Descripción de la categoría' }
-            }
+            info: 'Envia un JSON con name y descripción opcional.'
         },
         { 
             method: 'GET', 
@@ -152,15 +134,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/product', 
             description: 'Crear nuevo producto',
-            info: 'Envia un JSON con name, price, description, etc.',
-            params: {
-                name: { type: 'string', required: true, desc: 'Nombre del producto' },
-                price: { type: 'number', required: true, desc: 'Precio del producto' },
-                description: { type: 'string', required: true, desc: 'Descripción del producto' },
-                categoryId: { type: 'string', required: true, desc: 'ID de la categoría' },
-                stock: { type: 'number', required: true, desc: 'Cantidad disponible' },
-                images: { type: 'array', required: false, desc: 'URLs de las imágenes' }
-            }
+            info: 'Envia un JSON con name, price, description, etc.'
         },
         { 
             method: 'PUT', 
@@ -186,11 +160,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/cart/add', 
             description: 'Añadir producto al carrito',
-            info: 'Envia JSON con id de producto y cantidad.',
-            params: {
-                productId: { type: 'string', required: true, desc: 'ID del producto' },
-                quantity: { type: 'number', required: true, desc: 'Cantidad a agregar' }
-            }
+            info: 'Envia JSON con id de producto y cantidad.'
         },
         { 
             method: 'PUT', 
@@ -222,20 +192,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/order', 
             description: 'Crear nuevo pedido',
-            info: 'Envia JSON con id de usuario, productos y dirección.',
-            params: {
-                products: { 
-                    type: 'array', 
-                    required: true, 
-                    desc: 'Array de productos [{productId, quantity}]' 
-                },
-                shippingAddress: { 
-                    type: 'object', 
-                    required: true, 
-                    desc: 'Dirección de envío {street, city, state, zipCode}'
-                },
-                paymentMethod: { type: 'string', required: true, desc: 'Método de pago' }
-            }
+            info: 'Envia JSON con id de usuario, productos y dirección.'
         },
         { 
             method: 'GET', 
@@ -267,12 +224,7 @@ const apiEndpoints = {
             method: 'POST', 
             path: '/api/review', 
             description: 'Crear nueva reseña',
-            info: 'Envia JSON con id de producto, rating y comentario.',
-            params: {
-                productId: { type: 'string', required: true, desc: 'ID del producto' },
-                rating: { type: 'number', required: true, desc: 'Calificación (1-5)' },
-                comment: { type: 'string', required: true, desc: 'Comentario de la reseña' }
-            }
+            info: 'Envia JSON con id de producto, rating y comentario.'
         },
         { 
             method: 'PUT', 
@@ -304,20 +256,6 @@ export const getApiDocs = () => {
                 <code>${endpoint.path}</code>
                 <div class="description">${endpoint.description}</div>
                 ${endpoint.info ? `<div class="info">${endpoint.info}</div>` : ''}
-                ${endpoint.params ? `
-                    <div class="params">
-                        <h4>Parámetros:</h4>
-                        <ul>
-                            ${Object.entries(endpoint.params).map(([paramName, paramDetails]) => `
-                                <li>
-                                    <code>${paramName}</code> (${paramDetails.type})
-                                    ${paramDetails.required ? '<span class="required">*</span>' : ''}
-                                    - ${paramDetails.desc}
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
             </div>
         `).join('')}
     `).join('');

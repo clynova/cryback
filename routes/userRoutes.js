@@ -19,7 +19,7 @@ import {
     validarNuevaPassword,
     validarCambiarPassword
 } from '../middleware/validators/userValidators.js';
-import { checkAuth, checkTokenBlacklist, checkRole, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
+import { checkAuth, checkTokenBlacklist, checkRole, checkOwnerOrAdmin, validateToken } from '../middleware/authMiddleware.js';
 import { User } from '../models/User.js';
 
 const userRoutes = express.Router();
@@ -28,6 +28,9 @@ const userRoutes = express.Router();
 userRoutes.post('/registrar', validateUserRegistration, registrar); // Registrar un nuevo usuario
 userRoutes.post('/confirmar', confirmar); // Cambio de GET a POST para recibir email y token
 userRoutes.post('/autenticar', validarAutenticar, autenticar); // Autenticar usuario (login)
+userRoutes.post('/logout', logout); // Cerrar sesión e invalidar token
+userRoutes.get('/validate-token', validateToken); // Validar token
+
 
 // Rutas para restablecer contraseña
 userRoutes.post('/reset-password', resetPassword); // Solicitar restablecimiento de contraseña
