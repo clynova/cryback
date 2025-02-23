@@ -28,7 +28,7 @@ const userRoutes = express.Router();
 userRoutes.post('/registrar', validateUserRegistration, registrar); // Registrar un nuevo usuario
 userRoutes.post('/confirmar', confirmar); // Cambio de GET a POST para recibir email y token
 userRoutes.post('/autenticar', validarAutenticar, autenticar); // Autenticar usuario (login)
-userRoutes.post('/logout', logout); // Cerrar sesión e invalidar token
+userRoutes.get('/logout', logout); // Cerrar sesión e invalidar token
 userRoutes.get('/validate-token', validateToken); // Validar token
 
 
@@ -49,7 +49,5 @@ userRoutes.delete('/delete-account/:userId', deleteAccount); // Eliminar cuenta 
 // Rutas de administración (solo para administradores)
 userRoutes.get('/all', checkRole('admin'), getAllUsers); // Obtener todos los usuarios (solo para administradores)
 
-// Cerrar sesión
-userRoutes.post('/logout', logout); // Cerrar sesión e invalidar token
 
 export { userRoutes };

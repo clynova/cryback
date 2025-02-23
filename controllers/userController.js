@@ -338,10 +338,10 @@ const getUserById = async (req, res) => {
 const logout = async (req, res) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
+        console.log(token)
         if (!token) {
-            return res.status(400).send({ success: false, msg: "Token no proporcionado" });
+            return res.status(401).send({ success: false, msg: "Acceso denegado. No hay token proporcionado." });
         }
-
         // Verificar si el token ya está en la lista negra
         const tokenExists = await TokenBlacklist.findOne({ token });
         if (tokenExists) {
