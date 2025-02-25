@@ -2,10 +2,15 @@ import { Order } from '../models/Order.js';
 import { OrderDetail } from '../models/OrderDetail.js';
 import { Cart } from '../models/Cart.js';
 import { Product } from '../models/Product.js';
-import mongoose from 'mongoose';
+import { validationResult } from 'express-validator';
 
 const createOrder = async (req, res) => {
     try {
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
+        }
         const userId = req.user._id;
         const { shippingAddress, paymentMethod } = req.body;
 
@@ -14,6 +19,9 @@ const createOrder = async (req, res) => {
         if (!validPaymentMethods.includes(paymentMethod)) {
             return res.status(400).json({ success: false, msg: "Método de pago inválido" });
         }
+
+        console.log(shippingAddress);
+        console.log("paymentMethod:", paymentMethod);
 
         // Validar la dirección de envío
         if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zipCode || !shippingAddress.country) {
@@ -48,7 +56,6 @@ const createOrder = async (req, res) => {
             shippingAddress,
             paymentMethod,
         });
-
 
         // Guardar la orden en la base de datos
         await order.save();
@@ -101,7 +108,6 @@ const getUserOrders = async (req, res) => {
         const ordersWithDetails = await Promise.all(
             orders.map(async (order) => {
                 const orderDetails = await OrderDetail.find({ orderId: order._id }).populate('productId');
-                console.log(orderDetails)
                 return {
                     ...order.toObject(), // Convertir el documento de Mongoose a un objeto plano
                     products: orderDetails.map(detail => ({

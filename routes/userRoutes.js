@@ -11,7 +11,8 @@ import {
     deleteAccount,
     getAllUsers,
     getUserById,
-    logout
+    logout,
+    getUser
 } from '../controllers/userController.js';
 import {
     validateUserRegistration,
@@ -40,8 +41,8 @@ userRoutes.post('/reset-password/:token', validarNuevaPassword, nuevoPassword); 
 // Rutas protegidas (requieren autenticación y validación de token)
 userRoutes.use(checkAuth, checkTokenBlacklist); // Middleware aplicado a todas las rutas siguientes
 
-userRoutes.get('/perfil', getUserById); // Obtener perfil del usuario autenticado
-userRoutes.get('/perfil/:userId',  getUserById); // Obtener perfil de un usuario específico (solo para administradores)
+userRoutes.get('/perfil', getUser); // Obtener perfil del usuario autenticado
+userRoutes.post('/perfil', checkRole("admin"),  getUserById); // Obtener perfil de un usuario específico (solo para administradores)
 userRoutes.put('/perfil', updateProfile); // Actualizar perfil del usuario autenticado
 userRoutes.put('/change-password', validarCambiarPassword, changePassword); // Cambiar contraseña del usuario autenticado
 userRoutes.delete('/delete-account/:userId', deleteAccount); // Eliminar cuenta (propia o de otro usuario si es admin)

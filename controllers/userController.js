@@ -312,16 +312,31 @@ const getAllUsers = async (req, res) => {
     }
 }
 
-const getUserById = async (req, res) => {
+const getUser = async (req, res) => {
     try {
-        const { userId } = req.params;
         const requestingUserId = req.user._id;
 
         // Verificar si el usuario que hace la solicitud es un administrador o el propio usuario
         const requestingUser = await User.findById(requestingUserId);
-        if (!requestingUser || (!requestingUser.roles.includes('admin') && requestingUserId.toString() !== userId.toString())) {
+        if (!requestingUser || (!requestingUser.roles.includes('admin') && requestingUserId.toString() !== requestingUserId.toString())) {
             return res.status(403).send({ success: false, msg: "No tienes permisos para realizar esta acción" });
         }
+
+        // Obtener el usuario
+        const user = await User.findById(requestingUserId, { password: 0, token: 0 }); // Excluir campos sensibles
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        res.status(200).send({ success: true, data: user });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Hubo un error al obtener el usuario" });
+    }
+};
+
+const getUserById = async (req, res) => {
+    try {
+        const { userId } = req.body;
 
         // Obtener el usuario
         const user = await User.findById(userId, { password: 0, token: 0 }); // Excluir campos sensibles
@@ -372,5 +387,6 @@ export {
     deleteAccount,
     getAllUsers,
     getUserById,
-    logout
+    logout,
+    getUser
 };
