@@ -372,8 +372,156 @@ const logout = async (req, res) => {
     }
 };
 
+const addAddress = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const addressData = req.body;
 
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
 
+        // Si es la primera dirección o se marca como predeterminada
+        if (user.addresses.length === 0 || addressData.isDefault) {
+            // Desmarcar cualquier otra dirección predeterminada
+            user.addresses.forEach(addr => addr.isDefault = false);
+            addressData.isDefault = true;
+            user.activeAddressId = addressData._id;
+        }
+
+        user.addresses.push(addressData);
+        await user.save();
+
+        res.status(201).send({
+            success: true,
+            msg: "Dirección agregada correctamente",
+            data: user.addresses[user.addresses.length - 1]
+        });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al agregar la dirección" });
+    }
+};
+
+const updateAddress = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { addressId } = req.params;
+        const updateData = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
+        if (addressIndex === -1) {
+            return res.status(404).send({ success: false, msg: "Dirección no encontrada" });
+        }
+
+        if (updateData.isDefault) {
+            user.addresses.forEach(addr => addr.isDefault = false);
+            user.activeAddressId = user.addresses[addressIndex]._id;
+        }
+
+        user.addresses[addressIndex] = { ...user.addresses[addressIndex].toObject(), ...updateData };
+        await user.save();
+
+        res.status(200).send({
+            success: true,
+            msg: "Dirección actualizada correctamente",
+            data: user.addresses[addressIndex]
+        });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al actualizar la dirección" });
+    }
+};
+
+const deleteAddress = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { addressId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
+        if (addressIndex === -1) {
+            return res.status(404).send({ success: false, msg: "Dirección no encontrada" });
+        }
+
+        const deletedAddress = user.addresses[addressIndex];
+        user.addresses.splice(addressIndex, 1);
+
+        // Si la dirección eliminada era la predeterminada, establecer la primera dirección como predeterminada
+        if (deletedAddress.isDefault && user.addresses.length > 0) {
+            user.addresses[0].isDefault = true;
+            user.activeAddressId = user.addresses[0]._id;
+        } else if (user.addresses.length === 0) {
+            user.activeAddressId = null;
+        }
+
+        await user.save();
+
+        res.status(200).send({
+            success: true,
+            msg: "Dirección eliminada correctamente"
+        });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al eliminar la dirección" });
+    }
+};
+
+const setActiveAddress = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { addressId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        const address = user.addresses.id(addressId);
+        if (!address) {
+            return res.status(404).send({ success: false, msg: "Dirección no encontrada" });
+        }
+
+        user.activeAddressId = addressId;
+        await user.save();
+
+        res.status(200).send({
+            success: true,
+            msg: "Dirección activa establecida correctamente",
+            data: address
+        });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al establecer la dirección activa" });
+    }
+};
+
+const getAddresses = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        res.status(200).send({
+            success: true,
+            data: {
+                addresses: user.addresses,
+                activeAddressId: user.activeAddressId
+            }
+        });
+    } catch (err) {
+        res.status(500).send({ success: false, msg: "Error al obtener las direcciones" });
+    }
+};
 
 export {
     registrar,
@@ -388,5 +536,10 @@ export {
     getAllUsers,
     getUserById,
     logout,
-    getUser
+    getUser,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setActiveAddress,
+    getAddresses
 };

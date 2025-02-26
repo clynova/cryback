@@ -1,4 +1,5 @@
 import { body } from 'express-validator';
+import { check } from 'express-validator';
 
 const validateUserRegistration = [
     body('firstName')
@@ -79,4 +80,46 @@ const validarCambiarPassword = [
         }),
 ];
 
-export { validateUserRegistration, validarAutenticar, validarNuevaPassword, validarCambiarPassword };
+const addressValidationRules = [
+    check('street')
+        .notEmpty()
+        .withMessage('La calle es requerida')
+        .isLength({ min: 3 })
+        .withMessage('La calle debe tener al menos 3 caracteres'),
+    check('city')
+        .notEmpty()
+        .withMessage('La ciudad es requerida')
+        .isLength({ min: 2 })
+        .withMessage('La ciudad debe tener al menos 2 caracteres'),
+    check('state')
+        .notEmpty()
+        .withMessage('El estado es requerido')
+        .isLength({ min: 2 })
+        .withMessage('El estado debe tener al menos 2 caracteres'),
+    check('country')
+        .notEmpty()
+        .withMessage('El país es requerido')
+        .isLength({ min: 2 })
+        .withMessage('El país debe tener al menos 2 caracteres'),
+    check('zipCode')
+        .notEmpty()
+        .withMessage('El código postal es requerido')
+        .matches(/^\d{5}(-\d{4})?$/)
+        .withMessage('El código postal debe tener un formato válido (12345 o 12345-6789)'),
+    check('reference')
+        .optional()
+        .isLength({ max: 200 })
+        .withMessage('La referencia no debe exceder los 200 caracteres'),
+    check('isDefault')
+        .optional()
+        .isBoolean()
+        .withMessage('isDefault debe ser un valor booleano')
+];
+
+export {
+    validateUserRegistration,
+    validarAutenticar,
+    validarNuevaPassword,
+    validarCambiarPassword,
+    addressValidationRules
+};

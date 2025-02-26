@@ -12,13 +12,19 @@ import {
     getAllUsers,
     getUserById,
     logout,
-    getUser
+    getUser,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setActiveAddress,
+    getAddresses
 } from '../controllers/userController.js';
 import {
     validateUserRegistration,
     validarAutenticar,
     validarNuevaPassword,
-    validarCambiarPassword
+    validarCambiarPassword,
+    addressValidationRules
 } from '../middleware/validators/userValidators.js';
 import { checkAuth, checkTokenBlacklist, checkRole, checkOwnerOrAdmin, validateToken } from '../middleware/authMiddleware.js';
 import { User } from '../models/User.js';
@@ -31,7 +37,6 @@ userRoutes.post('/confirmar', confirmar); // Cambio de GET a POST para recibir e
 userRoutes.post('/autenticar', validarAutenticar, autenticar); // Autenticar usuario (login)
 userRoutes.get('/logout', logout); // Cerrar sesión e invalidar token
 userRoutes.get('/validate-token', validateToken); // Validar token
-
 
 // Rutas para restablecer contraseña
 userRoutes.post('/reset-password', resetPassword); // Solicitar restablecimiento de contraseña
@@ -50,5 +55,11 @@ userRoutes.delete('/delete-account/:userId', deleteAccount); // Eliminar cuenta 
 // Rutas de administración (solo para administradores)
 userRoutes.get('/all', checkRole('admin'), getAllUsers); // Obtener todos los usuarios (solo para administradores)
 
+// Rutas de direcciones
+userRoutes.post('/addresses', addressValidationRules, addAddress);
+userRoutes.get('/addresses', getAddresses);
+userRoutes.put('/addresses/:addressId', addressValidationRules, updateAddress);
+userRoutes.delete('/addresses/:addressId', deleteAddress);
+userRoutes.put('/addresses/:addressId/active', setActiveAddress);
 
 export { userRoutes };
