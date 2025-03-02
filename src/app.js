@@ -12,6 +12,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Importar rutas
+import { userRoutes } from '../routes/userRoutes.js';
+import { cartRoutes } from '../routes/cartRoutes.js';
+import { categoryRoutes } from '../routes/categoryRoutes.js';
+import { productRoutes } from '../routes/productRoutes.js';
+import { reviewRoutes } from '../routes/reviewRoutes.js';
+import { wishlistRoutes } from '../routes/wishlistRoutes.js';
+import { orderRoutes } from '../routes/orderRoutes.js';
+import { paymentMethodRoutes } from '../routes/paymentMethodRoutes.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -37,7 +47,7 @@ app.use(compression());
 
 // Configuración de CORS
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? ['https://tu-frontend-domain.com']
     : 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -50,18 +60,28 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Ruta principal
 app.get('/', async (req, res) => {
-    try {
-        const template = await fs.readFile(
-            path.join(__dirname, 'views', 'home.html'), 
-            'utf8'
-        );
-        const html = template.replace('{{API_DOCS}}', getApiDocs());
-        res.send(html);
-    } catch (error) {
-        console.error('Error al cargar la página:', error);
-        res.status(500).send('Error interno del servidor');
-    }
+  try {
+    const template = await fs.readFile(
+      path.join(__dirname, 'views', 'home.html'),
+      'utf8'
+    );
+    const html = template.replace('{{API_DOCS}}', getApiDocs());
+    res.send(html);
+  } catch (error) {
+    console.error('Error al cargar la página:', error);
+    res.status(500).send('Error interno del servidor');
+  }
 });
+
+// Rutas
+app.use('/api/users', userRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payment-methods', paymentMethodRoutes);
 
 app.use((err, req, res, next) => {
   errorHandler(err, req, res, next);
