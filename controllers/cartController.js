@@ -170,7 +170,7 @@ const loadCart = async (req, res) => {
         let cart = await Cart.findOne({ userId });
 
         if (!cart) {
-            return res.status(404).json({ success: false, msg: "El carrito está vacío" });
+            return res.status(400).json({ success: false, msg: "El carrito está vacío" });
         }
 
         res.status(200).json({ success: true, cart, msg: "Se envio correctamente el carrito" });

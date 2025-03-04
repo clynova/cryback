@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema(
             zipCode: { type: String, trim: true },
             country: { type: String, trim: true },
         },
-        paymentMethod: { type: String, required: true, enum: ["card", "paypal", "bank_transfer"] },
+        paymentMethod: { type: String, required: true, enum: ['credit_card', 'debit_card', 'paypal']},
     },
     { timestamps: true } // Agrega automáticamente createdAt y updatedAt
 );
