@@ -43,11 +43,15 @@ const updateShippingMethod = async (req, res) => {
             return res.status(404).json({ msg: "Método de envío no encontrado" });
         }
 
+        // Actualizar campos principales
         shippingMethod.name = req.body.name || shippingMethod.name;
-        shippingMethod.company = req.body.company || shippingMethod.company;
-        shippingMethod.description = req.body.description || shippingMethod.description;
-        shippingMethod.cost = req.body.cost || shippingMethod.cost;
-        shippingMethod.estimatedDeliveryDays = req.body.estimatedDeliveryDays || shippingMethod.estimatedDeliveryDays;
+        shippingMethod.tracking_url = req.body.tracking_url !== undefined ? req.body.tracking_url : shippingMethod.tracking_url;
+        
+        // Actualizar métodos si se proporcionan
+        if (req.body.methods && Array.isArray(req.body.methods)) {
+            shippingMethod.methods = req.body.methods;
+        }
+        
         shippingMethod.active = req.body.active !== undefined ? req.body.active : shippingMethod.active;
 
         await shippingMethod.save();

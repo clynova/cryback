@@ -22,14 +22,24 @@ const orderSchema = new mongoose.Schema(
             enum: ['credit_card', 'debit_card', 'paypal'],
             required: false
         },
-        shippingMethod: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'ShippingMethod',
-            required: true
-        },
-        shippingCost: {
-            type: Number,
-            required: true
+        shipping: {
+            carrier: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'ShippingMethod',
+                required: true
+            },
+            method: {
+                type: String,
+                required: true
+            },
+            cost: {
+                type: Number,
+                required: true
+            },
+            trackingNumber: {
+                type: String,
+                default: null
+            }
         },
         estimatedDeliveryDate: {
             type: Date,

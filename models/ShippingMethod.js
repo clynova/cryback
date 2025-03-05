@@ -7,25 +7,36 @@ const shippingMethodSchema = new mongoose.Schema(
             required: true, 
             trim: true 
         },
-        company: { 
-            type: String, 
-            required: true, 
-            trim: true 
+        tracking_url: {
+            type: String,
+            trim: true,
+            default: ""
         },
-        description: { 
-            type: String, 
-            trim: true 
-        },
-        cost: { 
-            type: Number, 
-            required: true, 
-            min: 0 
-        },
-        estimatedDeliveryDays: { 
-            type: Number, 
-            required: true, 
-            min: 1 
-        },
+        methods: [
+            {
+                name: {
+                    type: String,
+                    required: true,
+                    trim: true
+                },
+                delivery_time: {
+                    type: String,
+                    required: true,
+                    trim: true
+                },
+                base_cost: {
+                    type: Number,
+                    required: true,
+                    min: 0
+                },
+                extra_cost_per_kg: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                    default: 0
+                }
+            }
+        ],
         active: { 
             type: Boolean, 
             default: true 
