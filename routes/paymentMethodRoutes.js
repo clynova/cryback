@@ -1,27 +1,27 @@
-import express from 'express';
-import { checkAuth } from '../middleware/authMiddleware.js';
+import express from "express";
 import {
-    addPaymentMethod,
+    createPaymentMethod,
     getPaymentMethods,
+    getAllPaymentMethods,
+    getPaymentMethod,
     updatePaymentMethod,
     deletePaymentMethod,
-    setDefaultPaymentMethod
-} from '../controllers/paymentMethodController.js';
-import {
-    validatePaymentMethod,
-    validatePaymentMethodUpdate
-} from '../middleware/validators/paymentMethodValidators.js';
+    restorePaymentMethod
+} from "../controllers/paymentMethodController.js";
+import { validateCreatePaymentMethod, validateUpdatePaymentMethod } from "../middleware/validators/paymentMethodValidators.js";
+import { checkAuth, checkRole } from "../middleware/authMiddleware.js";
 
 const paymentMethodRoutes = express.Router();
 
-// Todas las rutas requieren autenticación
-paymentMethodRoutes.use(checkAuth);
+// Rutas públicas
+paymentMethodRoutes.get("/", getPaymentMethods);
+paymentMethodRoutes.get("/:id", getPaymentMethod);
 
-// Rutas de métodos de pago
-paymentMethodRoutes.post('/', validatePaymentMethod, addPaymentMethod);
-paymentMethodRoutes.get('/', getPaymentMethods);
-paymentMethodRoutes.put('/:id', validatePaymentMethodUpdate, updatePaymentMethod);
-paymentMethodRoutes.delete('/:id', deletePaymentMethod);
-paymentMethodRoutes.put('/:id/default', setDefaultPaymentMethod);
+// Rutas protegidas - solo administradores
+paymentMethodRoutes.get("/admin/all", checkAuth, checkRole('admin'), getAllPaymentMethods);
+paymentMethodRoutes.post("/", checkAuth, checkRole('admin'), validateCreatePaymentMethod, createPaymentMethod);
+paymentMethodRoutes.put("/:id", checkAuth, checkRole('admin'), validateUpdatePaymentMethod, updatePaymentMethod);
+paymentMethodRoutes.delete("/:id", checkAuth, checkRole('admin'), deletePaymentMethod);
+paymentMethodRoutes.put("/restore/:id", checkAuth, checkRole('admin'), restorePaymentMethod);
 
-export { paymentMethodRoutes };
+export { paymentMethodRoutes }; 

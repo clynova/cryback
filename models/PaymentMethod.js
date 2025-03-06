@@ -1,85 +1,94 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const paymentMethodSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+const paymentMethodSchema = new mongoose.Schema(
+    {
+        name: { 
+            type: String, 
+            required: true, 
+            trim: true 
+        },
+        type: {
+            type: String,
+            required: true,
+            enum: [
+                'transferencia', 
+                'webpay', 
+                'mercadopago', 
+                'flow'
+            ],
+            trim: true
+        },
+        description: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        provider: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        logo_url: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        requires_additional_data: {
+            type: Boolean,
+            default: false
+        },
+        additional_fields: [{
+            name: {
+                type: String,
+                trim: true
+            },
+            type: {
+                type: String,
+                enum: ['text', 'number', 'email', 'date'],
+                default: 'text'
+            },
+            required: {
+                type: Boolean,
+                default: false
+            }
+        }],
+        commission_percentage: {
+            type: Number,
+            min: 0,
+            max: 100,
+            default: 0
+        },
+        api_keys: {
+            public_key: {
+                type: String,
+                trim: true,
+                default: ""
+            },
+            private_key: {
+                type: String,
+                trim: true,
+                default: ""
+            },
+            commerce_code: {
+                type: String,
+                trim: true,
+                default: ""
+            }
+        },
+        is_sandbox: {
+            type: Boolean,
+            default: true
+        },
+        active: { 
+            type: Boolean, 
+            default: true 
+        }
     },
-    type: {
-        type: String,
-        required: true,
-        enum: ['credit_card', 'debit_card', 'paypal'],
-    },
-    // Para tarjetas
-    cardNumber: {
-        type: String,
-        select: false // No se incluye por defecto en las consultas
-    },
-    last4Digits: {
-        type: String
-    },
-    cardType: {
-        type: String,
-        enum: ['visa', 'mastercard', 'american_express', null]
-    },
-    expiryMonth: {
-        type: String,
-        select: false
-    },
-    expiryYear: {
-        type: String,
-        select: false
-    },
-    cardholderName: {
-        type: String
-    },
-    // Para PayPal
-    paypalEmail: {
-        type: String,
-        select: false
-    },
-    isDefault: {
-        type: Boolean,
-        default: false
-    },
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
+    { 
+        timestamps: true 
     }
-}, {
-    timestamps: true
-});
+);
 
-// Middleware para encriptar información sensible antes de guardar
-paymentMethodSchema.pre('save', async function(next) {
-    if (this.isModified('cardNumber')) {
-        // Solo guardamos los últimos 4 dígitos de la tarjeta
-        this.last4Digits = this.cardNumber.slice(-4);
-        // Aquí deberías implementar la encriptación del número completo de la tarjeta
-        // usando una biblioteca de cifrado como crypto-js
-    }
-    next();
-});
+const PaymentMethod = mongoose.model("PaymentMethod", paymentMethodSchema);
 
-// Método para ocultar información sensible
-paymentMethodSchema.methods.toJSON = function() {
-    const obj = this.toObject();
-    delete obj.cardNumber;
-    delete obj.expiryMonth;
-    delete obj.expiryYear;
-    delete obj.paypalEmail;
-    return obj;
-};
-
-const PaymentMethod = mongoose.model('PaymentMethod', paymentMethodSchema);
-
-export { PaymentMethod };
+export { PaymentMethod }; 

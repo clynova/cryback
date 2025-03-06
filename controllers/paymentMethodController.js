@@ -1,228 +1,157 @@
-import { PaymentMethod } from '../models/PaymentMethod.js';
-import CryptoJS from 'crypto-js';
-import { validationResult } from 'express-validator';
+import { PaymentMethod } from "../models/PaymentMethod.js";
+import { validationResult } from "express-validator";
 
-// Clave secreta para encriptación (debería estar en variables de entorno)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'tu_clave_secreta_muy_segura';
-
-const encryptData = (text) => {
-    return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-};
-
-const decryptData = (ciphertext) => {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
-};
-
-const addPaymentMethod = async (req, res) => {
+const createPaymentMethod = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const paymentData = { ...req.body };
-
-        // Si es el primer método de pago o se marca como predeterminado
-        if (paymentData.isDefault) {
-            await PaymentMethod.updateMany(
-                { userId: userId },
-                { $set: { isDefault: false } }
-            );
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
-
-        // Encriptar información sensible
-        if (paymentData.cardNumber) {
-            paymentData.cardNumber = encryptData(paymentData.cardNumber);
-        }
-        if (paymentData.paypalEmail) {
-            paymentData.paypalEmail = encryptData(paymentData.paypalEmail);
-        }
-
-        // Si es la primera tarjeta, establecerla como predeterminada
-        const existingMethods = await PaymentMethod.countDocuments({ userId });
-        if (existingMethods === 0) {
-            paymentData.isDefault = true;
-        }
-
-        const paymentMethod = new PaymentMethod({
-            ...paymentData,
-            userId
-        });
-
-        await paymentMethod.save();
         
-        res.status(201).send({
-            success: true,
-            msg: 'Método de pago agregado correctamente',
-            data: paymentMethod
-        });
+        const paymentMethod = new PaymentMethod(req.body);
+        await paymentMethod.save();
+        res.status(201).json(paymentMethod);
     } catch (error) {
-        console.error('Error al agregar método de pago:', error);
-        res.status(500).send({
-            success: false,
-            msg: 'Error al agregar el método de pago',
-            error: error.message
-        });
+        console.log(error);
+        res.status(500).json({ msg: "Error al crear el método de pago" });
     }
 };
 
 const getPaymentMethods = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const paymentMethods = await PaymentMethod.find({ 
-            userId,
-            isActive: true
-        });
-
-        res.status(200).send({
-            success: true,
-            data: paymentMethods
-        });
+        const paymentMethods = await PaymentMethod.find({ active: true });
+        res.json(paymentMethods);
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            msg: 'Error al obtener los métodos de pago',
-            error: error.message
-        });
+        console.log(error);
+        res.status(500).json({ msg: "Error al obtener los métodos de pago" });
+    }
+};
+
+const getAllPaymentMethods = async (req, res) => {
+    try {
+        // Para administradores, obtiene todos los métodos incluyendo inactivos
+        const paymentMethods = await PaymentMethod.find();
+        res.json(paymentMethods);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Error al obtener todos los métodos de pago" });
+    }
+};
+
+const getPaymentMethod = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const paymentMethod = await PaymentMethod.findById(id);
+        if (!paymentMethod) {
+            return res.status(404).json({ msg: "Método de pago no encontrado" });
+        }
+        res.json(paymentMethod);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Error al obtener el método de pago" });
     }
 };
 
 const updatePaymentMethod = async (req, res) => {
+    const { id } = req.params;
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).send({ success: false, errors: errors.array() });
+            return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        const { id } = req.params;
-        const userId = req.user._id;
-        const updateData = req.body;
-
-        const paymentMethod = await PaymentMethod.findOne({ _id: id, userId });
+        const paymentMethod = await PaymentMethod.findById(id);
         if (!paymentMethod) {
-            return res.status(404).send({
-                success: false,
-                msg: 'Método de pago no encontrado'
-            });
+            return res.status(404).json({ msg: "Método de pago no encontrado" });
         }
 
-        // Si se está estableciendo como predeterminado
-        if (updateData.isDefault) {
-            await PaymentMethod.updateMany(
-                { userId, _id: { $ne: id } },
-                { $set: { isDefault: false } }
-            );
+        // Actualizar campos básicos
+        paymentMethod.name = req.body.name || paymentMethod.name;
+        paymentMethod.type = req.body.type || paymentMethod.type;
+        paymentMethod.description = req.body.description !== undefined ? req.body.description : paymentMethod.description;
+        paymentMethod.provider = req.body.provider || paymentMethod.provider;
+        paymentMethod.logo_url = req.body.logo_url !== undefined ? req.body.logo_url : paymentMethod.logo_url;
+        
+        // Actualizar campos relacionados con la configuración de datos adicionales
+        paymentMethod.requires_additional_data = req.body.requires_additional_data !== undefined ? 
+            req.body.requires_additional_data : paymentMethod.requires_additional_data;
+        
+        // Actualizar campos adicionales si se proporcionan
+        if (req.body.additional_fields && Array.isArray(req.body.additional_fields)) {
+            paymentMethod.additional_fields = req.body.additional_fields;
         }
-
-        // Encriptar nueva información sensible si se proporciona
-        if (updateData.cardNumber) {
-            updateData.cardNumber = encryptData(updateData.cardNumber);
+        
+        // Actualizar comisión
+        paymentMethod.commission_percentage = req.body.commission_percentage !== undefined ? 
+            req.body.commission_percentage : paymentMethod.commission_percentage;
+        
+        // Actualizar claves de API si se proporcionan
+        if (req.body.api_keys) {
+            paymentMethod.api_keys = {
+                ...paymentMethod.api_keys,
+                ...req.body.api_keys
+            };
         }
-        if (updateData.paypalEmail) {
-            updateData.paypalEmail = encryptData(updateData.paypalEmail);
-        }
+        
+        // Actualizar modo sandbox
+        paymentMethod.is_sandbox = req.body.is_sandbox !== undefined ?
+            req.body.is_sandbox : paymentMethod.is_sandbox;
+        
+        // Actualizar estado activo
+        paymentMethod.active = req.body.active !== undefined ? req.body.active : paymentMethod.active;
 
-        const updatedPaymentMethod = await PaymentMethod.findByIdAndUpdate(
-            id,
-            { ...updateData, updatedAt: Date.now() },
-            { new: true }
-        );
-
-        res.status(200).send({
-            success: true,
-            msg: 'Método de pago actualizado correctamente',
-            data: updatedPaymentMethod
-        });
+        await paymentMethod.save();
+        res.json(paymentMethod);
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            msg: 'Error al actualizar el método de pago',
-            error: error.message
-        });
+        console.log(error);
+        res.status(500).json({ msg: "Error al actualizar el método de pago" });
     }
 };
 
 const deletePaymentMethod = async (req, res) => {
+    const { id } = req.params;
     try {
-        const { id } = req.params;
-        const userId = req.user._id;
-
-        const paymentMethod = await PaymentMethod.findOne({ _id: id, userId });
+        const paymentMethod = await PaymentMethod.findById(id);
         if (!paymentMethod) {
-            return res.status(404).send({
-                success: false,
-                msg: 'Método de pago no encontrado'
-            });
+            return res.status(404).json({ msg: "Método de pago no encontrado" });
         }
 
-        // Soft delete: marcar como inactivo en lugar de eliminar
-        paymentMethod.isActive = false;
+        // Soft delete
+        paymentMethod.active = false;
         await paymentMethod.save();
-
-        // Si era el método predeterminado, establecer otro como predeterminado
-        if (paymentMethod.isDefault) {
-            const anotherPaymentMethod = await PaymentMethod.findOne({
-                userId,
-                isActive: true,
-                _id: { $ne: id }
-            });
-            if (anotherPaymentMethod) {
-                anotherPaymentMethod.isDefault = true;
-                await anotherPaymentMethod.save();
-            }
-        }
-
-        res.status(200).send({
-            success: true,
-            msg: 'Método de pago eliminado correctamente'
-        });
+        
+        res.json({ msg: "Método de pago eliminado correctamente" });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            msg: 'Error al eliminar el método de pago',
-            error: error.message
-        });
+        console.log(error);
+        res.status(500).json({ msg: "Error al eliminar el método de pago" });
     }
 };
 
-const setDefaultPaymentMethod = async (req, res) => {
+const restorePaymentMethod = async (req, res) => {
+    const { id } = req.params;
     try {
-        const { id } = req.params;
-        const userId = req.user._id;
-
-        const paymentMethod = await PaymentMethod.findOne({ _id: id, userId });
+        const paymentMethod = await PaymentMethod.findById(id);
         if (!paymentMethod) {
-            return res.status(404).send({
-                success: false,
-                msg: 'Método de pago no encontrado'
-            });
+            return res.status(404).json({ msg: "Método de pago no encontrado" });
         }
 
-        // Quitar el estado predeterminado de todos los demás métodos de pago
-        await PaymentMethod.updateMany(
-            { userId, _id: { $ne: id } },
-            { $set: { isDefault: false } }
-        );
-
-        // Establecer este método como predeterminado
-        paymentMethod.isDefault = true;
+        // Restaurar
+        paymentMethod.active = true;
         await paymentMethod.save();
-
-        res.status(200).send({
-            success: true,
-            msg: 'Método de pago establecido como predeterminado',
-            data: paymentMethod
-        });
+        
+        res.json({ msg: "Método de pago restaurado correctamente" });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            msg: 'Error al establecer el método de pago predeterminado',
-            error: error.message
-        });
+        console.log(error);
+        res.status(500).json({ msg: "Error al restaurar el método de pago" });
     }
 };
 
 export {
-    addPaymentMethod,
+    createPaymentMethod,
     getPaymentMethods,
+    getAllPaymentMethods,
+    getPaymentMethod,
     updatePaymentMethod,
     deletePaymentMethod,
-    setDefaultPaymentMethod
-};
+    restorePaymentMethod
+}; 

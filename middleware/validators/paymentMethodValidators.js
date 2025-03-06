@@ -1,128 +1,151 @@
 import { body } from 'express-validator';
 
-const creditCardValidation = [
+const validateCreatePaymentMethod = [
+    body('name')
+        .trim()
+        .notEmpty().withMessage('El nombre es requerido')
+        .isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
     body('type')
-        .notEmpty()
-        .withMessage('El tipo de método de pago es requerido')
-        .isIn(['credit_card', 'debit_card', 'card'])
-        .withMessage('Tipo de método de pago inválido para tarjeta'),
-
-    body('cardholderName')
-        .notEmpty()
-        .withMessage('El nombre del titular es requerido')
-        .matches(/^[a-zA-Z\s]+$/)
-        .withMessage('El nombre del titular solo puede contener letras y espacios'),
-
-    body('cardNumber')
-        .notEmpty()
-        .withMessage('El número de tarjeta es requerido')
-        .matches(/^[0-9]{16}$/)
-        .withMessage('Número de tarjeta inválido'),
-
-    body('expirationMonth')
-        .notEmpty()
-        .withMessage('El mes de expiración es requerido')
-        .matches(/^(0[1-9]|1[0-2])$/)
-        .withMessage('Mes de expiración inválido'),
-
-    body('expirationYear')
-        .notEmpty()
-        .withMessage('El año de expiración es requerido')
-        .matches(/^20[2-9][0-9]$/)
-        .withMessage('Año de expiración inválido'),
-
-    body('brand')
-        .notEmpty()
-        .withMessage('La marca de la tarjeta es requerida')
-        .isIn(['visa', 'mastercard', 'american_express'])
-        .withMessage('Marca de tarjeta inválida'),
-
-    body('isDefault')
+        .trim()
+        .notEmpty().withMessage('El tipo es requerido')
+        .isIn([
+            'transferencia', 
+            'webpay', 
+            'mercadopago', 
+            'flow'
+        ]).withMessage('Tipo de pago no válido'),
+    body('description')
         .optional()
-        .isBoolean()
-        .withMessage('El valor de isDefault debe ser booleano')
+        .trim(),
+    body('provider')
+        .trim()
+        .notEmpty().withMessage('El proveedor es requerido')
+        .isLength({ min: 2 }).withMessage('El proveedor debe tener al menos 2 caracteres'),
+    body('logo_url')
+        .optional()
+        .trim()
+        .isURL().withMessage('La URL del logo debe ser una URL válida'),
+    body('requires_additional_data')
+        .optional()
+        .isBoolean().withMessage('El campo requires_additional_data debe ser un valor booleano'),
+    body('additional_fields')
+        .optional()
+        .isArray().withMessage('Los campos adicionales deben ser un array'),
+    body('additional_fields.*.name')
+        .optional()
+        .trim()
+        .notEmpty().withMessage('El nombre del campo adicional es requerido'),
+    body('additional_fields.*.type')
+        .optional()
+        .isIn(['text', 'number', 'email', 'date']).withMessage('Tipo de campo adicional no válido'),
+    body('additional_fields.*.required')
+        .optional()
+        .isBoolean().withMessage('El campo required debe ser un valor booleano'),
+    body('commission_percentage')
+        .optional()
+        .isNumeric().withMessage('El porcentaje de comisión debe ser un número')
+        .custom((value) => {
+            if (value < 0 || value > 100) {
+                throw new Error('El porcentaje de comisión debe estar entre 0 y 100');
+            }
+            return true;
+        }),
+    body('api_keys')
+        .optional(),
+    body('api_keys.public_key')
+        .optional()
+        .trim(),
+    body('api_keys.private_key')
+        .optional()
+        .trim(),
+    body('api_keys.commerce_code')
+        .optional()
+        .trim(),
+    body('is_sandbox')
+        .optional()
+        .isBoolean().withMessage('El campo is_sandbox debe ser un valor booleano'),
+    body('active')
+        .optional()
+        .isBoolean().withMessage('El campo active debe ser un valor booleano')
 ];
 
-const paypalValidation = [
-    body('type')
-        .notEmpty()
-        .withMessage('El tipo de método de pago es requerido')
-        .equals('paypal')
-        .withMessage('Tipo de método de pago inválido para PayPal'),
-
-    body('paypalEmail')
-        .notEmpty()
-        .withMessage('El correo de PayPal es requerido')
-        .isEmail()
-        .withMessage('Correo de PayPal inválido'),
-
-    body('isDefault')
+const validateUpdatePaymentMethod = [
+    body('name')
         .optional()
-        .isBoolean()
-        .withMessage('El valor de isDefault debe ser booleano')
-];
-
-const validatePaymentMethodUpdate = [
+        .trim()
+        .notEmpty().withMessage('El nombre no puede estar vacío')
+        .isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
     body('type')
         .optional()
-        .isIn(['credit_card', 'debit_card', 'paypal', 'card'])
-        .withMessage('Tipo de método de pago inválido'),
-
-    body('cardNumber')
+        .trim()
+        .notEmpty().withMessage('El tipo no puede estar vacío')
+        .isIn([
+            'debito', 
+            'credito', 
+            'transferencia', 
+            'efectivo', 
+            'otro',
+            'webpay', 
+            'mercadopago', 
+            'payku', 
+            'flow', 
+            'kushki',
+            'payu'
+        ]).withMessage('Tipo de pago no válido'),
+    body('description')
         .optional()
-        .matches(/^[0-9]{16}$/)
-        .withMessage('Número de tarjeta inválido'),
-
-    body('cardholderName')
+        .trim(),
+    body('provider')
         .optional()
-        .matches(/^[a-zA-Z\s]+$/)
-        .withMessage('El nombre del titular solo puede contener letras y espacios'),
-
-    body('expirationMonth')
+        .trim()
+        .notEmpty().withMessage('El proveedor no puede estar vacío')
+        .isLength({ min: 2 }).withMessage('El proveedor debe tener al menos 2 caracteres'),
+    body('logo_url')
         .optional()
-        .matches(/^(0[1-9]|1[0-2])$/)
-        .withMessage('Mes de expiración inválido'),
-
-    body('expirationYear')
+        .trim()
+        .isURL().withMessage('La URL del logo debe ser una URL válida'),
+    body('requires_additional_data')
         .optional()
-        .matches(/^20[2-9][0-9]$/)
-        .withMessage('Año de expiración inválido'),
-
-    body('brand')
+        .isBoolean().withMessage('El campo requires_additional_data debe ser un valor booleano'),
+    body('additional_fields')
         .optional()
-        .isIn(['visa', 'mastercard', 'american_express'])
-        .withMessage('Marca de tarjeta inválida'),
-
-    body('paypalEmail')
+        .isArray().withMessage('Los campos adicionales deben ser un array'),
+    body('additional_fields.*.name')
         .optional()
-        .isEmail()
-        .withMessage('Correo de PayPal inválido'),
-
-    body('isDefault')
+        .trim()
+        .notEmpty().withMessage('El nombre del campo adicional no puede estar vacío'),
+    body('additional_fields.*.type')
         .optional()
-        .isBoolean()
-        .withMessage('El valor de isDefault debe ser booleano')
+        .isIn(['text', 'number', 'email', 'date']).withMessage('Tipo de campo adicional no válido'),
+    body('additional_fields.*.required')
+        .optional()
+        .isBoolean().withMessage('El campo required debe ser un valor booleano'),
+    body('commission_percentage')
+        .optional()
+        .isNumeric().withMessage('El porcentaje de comisión debe ser un número')
+        .custom((value) => {
+            if (value < 0 || value > 100) {
+                throw new Error('El porcentaje de comisión debe estar entre 0 y 100');
+            }
+            return true;
+        }),
+    body('api_keys')
+        .optional(),
+    body('api_keys.public_key')
+        .optional()
+        .trim(),
+    body('api_keys.private_key')
+        .optional()
+        .trim(),
+    body('api_keys.commerce_code')
+        .optional()
+        .trim(),
+    body('is_sandbox')
+        .optional()
+        .isBoolean().withMessage('El campo is_sandbox debe ser un valor booleano'),
+    body('active')
+        .optional()
+        .isBoolean().withMessage('El campo active debe ser un valor booleano')
 ];
 
-const validatePaymentMethod = (req, res, next) => {
-    const { type } = req.body;
-    
-    // Aplicar el conjunto de validaciones correspondiente
-    const validations = type === 'paypal' ? paypalValidation : creditCardValidation;
-    
-    // Aplicar todas las validaciones antes de llamar a next()
-    Promise.all(validations.map(validation => validation.run(req)))
-        .then(() => next())
-        .catch(error => {
-            res.status(400).send({
-                success: false,
-                msg: 'Error de validación',
-                error: error.message
-            });
-        });
-};
-
-export {
-    validatePaymentMethod,
-    validatePaymentMethodUpdate
-};
+export { validateCreatePaymentMethod, validateUpdatePaymentMethod }; 
