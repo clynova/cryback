@@ -3,7 +3,17 @@
  * Requiere instalar: npm install transbank-sdk
  */
 import pkg from 'transbank-sdk';
-const { WebpayPlus } = pkg;
+const { WebpayPlus, Environment } = pkg;
+
+// Función auxiliar para validar URL
+const isValidUrl = (string) => {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
 
 /**
  * Inicializa una transacción en WebPay
@@ -15,18 +25,58 @@ const { WebpayPlus } = pkg;
  */
 export const initTransaction = async (amount, buyOrder, returnUrl, sessionId) => {
   try {
+    // Validar los parámetros de entrada
+    if (!amount || isNaN(amount) || amount <= 0) {
+      throw new Error('El monto debe ser un número positivo');
+    }
+    
+    if (!buyOrder || buyOrder.length > 26) {
+      throw new Error(`'buyOrder' es inválido o demasiado largo (máximo 26 caracteres, actual: ${buyOrder ? buyOrder.length : 0})`);
+    }
+    
+    if (!returnUrl || !isValidUrl(returnUrl)) {
+      throw new Error(`La URL de retorno '${returnUrl}' no es válida`);
+    }
+    
+    if (!sessionId) {
+      throw new Error('El ID de sesión es requerido');
+    }
+
+    // Verificar variables de entorno requeridas
+    if (!process.env.WEBPAY_COMMERCE_CODE) {
+      throw new Error('WEBPAY_COMMERCE_CODE no está configurado en las variables de entorno');
+    }
+    if (!process.env.WEBPAY_API_KEY) {
+      throw new Error('WEBPAY_API_KEY no está configurado en las variables de entorno');
+    }
+    
     // Configuración según entorno (sandbox o producción)
+    const environment = process.env.WEBPAY_ENVIRONMENT === 'production' 
+      ? Environment.Production 
+      : Environment.Integration;
+
     const tx = new WebpayPlus.Transaction(
       process.env.WEBPAY_COMMERCE_CODE,
       process.env.WEBPAY_API_KEY,
-      process.env.WEBPAY_ENVIRONMENT
+      environment
     );
+    
+    console.log('Iniciando transacción WebPay con:', {
+      buyOrder,
+      sessionId,
+      amount,
+      returnUrl,
+      environment: process.env.WEBPAY_ENVIRONMENT || 'integration'
+    });
     
     // Iniciar transacción
     const response = await tx.create(buyOrder, sessionId, amount, returnUrl);
     return response;
   } catch (error) {
     console.error('Error iniciando transacción WebPay:', error);
+    if (error.message.includes('Invalid URL')) {
+      throw new Error(`URL de retorno inválida: ${returnUrl}. La URL debe ser accesible públicamente y usar HTTPS en producción.`);
+    }
     throw error;
   }
 };

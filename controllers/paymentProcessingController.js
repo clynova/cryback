@@ -5,6 +5,9 @@ import * as webpayService from '../services/webpayService.js';
 import * as mercadoPagoService from '../services/mercadoPagoService.js';
 import { OrderDetail } from '../models/OrderDetail.js';
 import { Product } from '../models/Product.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * Inicia el proceso de pago para una orden
@@ -44,31 +47,68 @@ export const initiatePayment = async (req, res) => {
         
         // Iniciar el proceso según el tipo de pago
         let paymentResponse;
+
+
+        console.log(order);
         
         if (paymentMethod.type === 'webpay') {
-            // Iniciar transacción con WebPay
-            const buyOrder = `OC-${order._id.toString()}`;
-            const sessionId = req.sessionID || req.user._id.toString();
-            const returnUrl = `${process.env.BACKEND_URL}/api/payments/webpay/return`;
-            
-            paymentResponse = await webpayService.initTransaction(
-                order.total,
-                buyOrder,
-                returnUrl,
-                sessionId
-            );
-            
-            // Actualizar orden con detalles iniciales de pago
-            order.payment.provider = 'webpay';
-            order.payment.status = 'processing';
-            await order.save();
-            
-            return res.json({
-                success: true,
-                redirectUrl: paymentResponse.url,
-                token: paymentResponse.token,
-                payment_type: 'webpay'
-            });
+            try {
+                // Iniciar transacción con WebPay
+                // Crear un identificador más corto para respetar el límite de 26 caracteres
+                const orderId = order._id.toString();
+                // Usar solo los últimos 12 caracteres para estar seguro de no exceder el límite
+                const shortOrderId = orderId.substring(orderId.length - 12); 
+                const buyOrder = `OC${shortOrderId}`;
+                
+                // Asegurarnos de que el buyOrder no exceda los 26 caracteres
+                console.log(`Longitud de buyOrder: ${buyOrder.length}, valor: ${buyOrder}`);
+                
+                const sessionId = req.sessionID || req.user._id.toString();
+                
+                // Construir URL de retorno
+                let returnUrl;
+                if (process.env.NODE_ENV === 'production') {
+                    // En producción, usar HTTPS
+                    returnUrl = `https://${process.env.BACKEND_URL}/api/payments/webpay/return`;
+                } else {
+                    // En desarrollo, usar ngrok o una URL pública similar
+                    // Si no hay URL configurada, usar localhost como fallback
+                    returnUrl = process.env.WEBPAY_RETURN_URL || 'https://cryback.onrender.com/';
+                }
+
+                // Validar que la URL no sea localhost en producción
+                if (process.env.NODE_ENV === 'production' && returnUrl.includes('localhost')) {
+                    throw new Error('No se puede usar localhost en producción para WebPay');
+                }
+
+                console.log('URL de retorno WebPay:', returnUrl);
+
+                paymentResponse = await webpayService.initTransaction(
+                    order.total,
+                    buyOrder,
+                    returnUrl,
+                    sessionId
+                );
+                
+                // Actualizar orden con detalles iniciales de pago
+                order.payment.provider = 'webpay';
+                order.payment.status = 'processing';
+                await order.save();
+                
+                return res.json({
+                    success: true,
+                    redirectUrl: paymentResponse.url,
+                    token: paymentResponse.token,
+                    payment_type: 'webpay'
+                });
+            } catch (error) {
+                console.error('Error iniciando transacción WebPay:', error);
+                return res.status(500).json({ 
+                    success: false, 
+                    msg: "Error al iniciar transacción con WebPay", 
+                    error: error.message 
+                });
+            }
             
         } else if (paymentMethod.type === 'mercadopago') {
             // Obtener los detalles de los productos en la orden
@@ -136,11 +176,30 @@ export const processWebpayReturn = async (req, res) => {
         // Confirmar la transacción con WebPay
         const paymentResult = await webpayService.confirmTransaction(token_ws);
         
-        // Extraer el orderId de la respuesta (formato: OC-orderId)
-        const orderId = paymentResult.buy_order.replace('OC-', '');
+        // Extraer el orderId de la respuesta (ahora usando el formato modificado)
+        // El formato es OC + últimos 20 caracteres del ObjectId
+        let buyOrder = paymentResult.buy_order;
         
-        // Buscar la orden
-        const order = await Order.findById(orderId);
+        // Buscar la orden - primero intentamos encontrar por el prefijo exacto
+        let order = null;
+        
+        if (buyOrder.startsWith('OC')) {
+            // Extraer el ID corto (los últimos 20 caracteres)
+            const shortOrderId = buyOrder.substring(2);
+            
+            // Buscar todas las órdenes que podrían coincidir
+            const possibleOrders = await Order.find({
+                status: 'pending',
+                'payment.status': 'processing',
+                'payment.provider': 'webpay'
+            });
+            
+            // Encontrar la orden que coincide con el shortOrderId
+            order = possibleOrders.find(o => 
+                o._id.toString().endsWith(shortOrderId)
+            );
+        }
+        
         if (!order) {
             return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=order_not_found`);
         }
@@ -154,14 +213,14 @@ export const processWebpayReturn = async (req, res) => {
             order.payment.paymentDate = new Date();
             await order.save();
             
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/success?order_id=${orderId}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/success?order_id=${order._id}`);
         } else {
             // Pago rechazado
             order.payment.status = 'failed';
             order.payment.paymentDetails = paymentResult;
             await order.save();
             
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=rejected&order_id=${orderId}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=rejected&order_id=${order._id}`);
         }
         
     } catch (error) {
