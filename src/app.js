@@ -11,16 +11,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Importar rutas
-import { userRoutes } from '../routes/userRoutes.js';
-import { cartRoutes } from '../routes/cartRoutes.js';
-import { categoryRoutes } from '../routes/categoryRoutes.js';
-import { productRoutes } from '../routes/productRoutes.js';
-import { reviewRoutes } from '../routes/reviewRoutes.js';
-import { wishlistRoutes } from '../routes/wishlistRoutes.js';
-import { orderRoutes } from '../routes/orderRoutes.js';
-import shippingMethodRoutes from "../routes/shippingMethodRoutes.js";
-import { paymentMethodRoutes } from "../routes/paymentMethodRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,15 +64,7 @@ app.get('/', async (req, res) => {
 });
 
 // Rutas
-app.use('/api/users', userRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/wishlist', wishlistRoutes);
-app.use('/api/orders', orderRoutes);
-app.use("/api/shipping-methods", shippingMethodRoutes);
-app.use("/api/payment-methods", paymentMethodRoutes);
+
 
 app.use((err, req, res, next) => {
   errorHandler(err, req, res, next);

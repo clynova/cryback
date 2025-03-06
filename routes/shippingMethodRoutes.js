@@ -9,15 +9,15 @@ import {
 import { validateCreateShippingMethod, validateUpdateShippingMethod } from "../middleware/validators/shippingMethodValidators.js";
 import { checkAuth } from "../middleware/authMiddleware.js";
 
-const router = express.Router();
+const shippingMethodRoutes = express.Router();
 
 // Rutas públicas
-router.get("/", getShippingMethods);
-router.get("/:id", getShippingMethod);
+shippingMethodRoutes.get("/", getShippingMethods);
+shippingMethodRoutes.get("/:id", getShippingMethod);
 
 // Rutas protegidas - solo administradores
-router.post("/", checkAuth, validateCreateShippingMethod, createShippingMethod);
-router.put("/:id", checkAuth, validateUpdateShippingMethod, updateShippingMethod);
-router.delete("/:id", checkAuth, deleteShippingMethod);
+shippingMethodRoutes.post("/", checkAuth, validateCreateShippingMethod, createShippingMethod);
+shippingMethodRoutes.put("/:id", checkAuth, validateUpdateShippingMethod, updateShippingMethod);
+shippingMethodRoutes.delete("/:id", checkAuth, deleteShippingMethod);
 
-export default router;
+export { shippingMethodRoutes };

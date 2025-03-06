@@ -18,9 +18,22 @@ const orderSchema = new mongoose.Schema(
             additionalInstructions: { type: String, trim: true } // Instrucciones adicionales para la entrega
         },
         paymentMethod: { 
-            type: String, 
-            enum: ['credit_card', 'debit_card', 'paypal'],
-            required: false
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PaymentMethod',
+            required: true
+        },
+        payment: {
+            status: { 
+                type: String, 
+                enum: ['pending', 'processing', 'completed', 'failed', 'refunded'],
+                default: 'pending'
+            },
+            transactionId: { type: String },
+            provider: { type: String },
+            amount: { type: Number },
+            currency: { type: String, default: 'CLP' },
+            paymentDate: { type: Date },
+            paymentDetails: { type: mongoose.Schema.Types.Mixed }
         },
         shipping: {
             carrier: {
