@@ -9,7 +9,7 @@ import {
     restorePaymentMethod
 } from "../controllers/paymentMethodController.js";
 import { validateCreatePaymentMethod, validateUpdatePaymentMethod } from "../middleware/validators/paymentMethodValidators.js";
-import { checkAuth, checkRole } from "../middleware/authMiddleware.js";
+import { checkAuth, checkOwnerOrAdmin } from "../middleware/authMiddleware.js";
 
 const paymentMethodRoutes = express.Router();
 
@@ -18,10 +18,10 @@ paymentMethodRoutes.get("/", getPaymentMethods);
 paymentMethodRoutes.get("/:id", getPaymentMethod);
 
 // Rutas protegidas - solo administradores
-paymentMethodRoutes.get("/admin/all", checkAuth, checkRole('admin'), getAllPaymentMethods);
-paymentMethodRoutes.post("/", checkAuth, checkRole('admin'), validateCreatePaymentMethod, createPaymentMethod);
-paymentMethodRoutes.put("/:id", checkAuth, checkRole('admin'), validateUpdatePaymentMethod, updatePaymentMethod);
-paymentMethodRoutes.delete("/:id", checkAuth, checkRole('admin'), deletePaymentMethod);
-paymentMethodRoutes.put("/restore/:id", checkAuth, checkRole('admin'), restorePaymentMethod);
+paymentMethodRoutes.get("/admin/all", checkAuth, checkOwnerOrAdmin('admin'), getAllPaymentMethods);
+paymentMethodRoutes.post("/", checkAuth, checkOwnerOrAdmin('admin'), validateCreatePaymentMethod, createPaymentMethod);
+paymentMethodRoutes.put("/:id", checkAuth, checkOwnerOrAdmin('admin'), validateUpdatePaymentMethod, updatePaymentMethod);
+paymentMethodRoutes.delete("/:id", checkAuth, checkOwnerOrAdmin('admin'), deletePaymentMethod);
+paymentMethodRoutes.put("/restore/:id", checkAuth, checkOwnerOrAdmin('admin'), restorePaymentMethod);
 
 export { paymentMethodRoutes }; 

@@ -18,8 +18,7 @@ const orderSchema = new mongoose.Schema(
             additionalInstructions: { type: String, trim: true } // Instrucciones adicionales para la entrega
         },
         paymentMethod: { 
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'PaymentMethod',
+            type: String,  // Cambiado de ObjectId a String para coincidir con la validación de MongoDB
             required: true
         },
         payment: {

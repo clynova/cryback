@@ -10,12 +10,7 @@ const paymentMethodSchema = new mongoose.Schema(
         type: {
             type: String,
             required: true,
-            enum: [
-                'transferencia', 
-                'webpay', 
-                'mercadopago', 
-                'flow'
-            ],
+            enum: ['debito', 'credito', 'transferencia', 'efectivo', 'otro'],
             trim: true
         },
         description: {
@@ -57,27 +52,6 @@ const paymentMethodSchema = new mongoose.Schema(
             min: 0,
             max: 100,
             default: 0
-        },
-        api_keys: {
-            public_key: {
-                type: String,
-                trim: true,
-                default: ""
-            },
-            private_key: {
-                type: String,
-                trim: true,
-                default: ""
-            },
-            commerce_code: {
-                type: String,
-                trim: true,
-                default: ""
-            }
-        },
-        is_sandbox: {
-            type: Boolean,
-            default: true
         },
         active: { 
             type: Boolean, 

@@ -8,12 +8,7 @@ const validateCreatePaymentMethod = [
     body('type')
         .trim()
         .notEmpty().withMessage('El tipo es requerido')
-        .isIn([
-            'transferencia', 
-            'webpay', 
-            'mercadopago', 
-            'flow'
-        ]).withMessage('Tipo de pago no válido'),
+        .isIn(['debito', 'credito', 'transferencia', 'efectivo', 'otro']).withMessage('Tipo de pago no válido'),
     body('description')
         .optional()
         .trim(),
@@ -50,20 +45,6 @@ const validateCreatePaymentMethod = [
             }
             return true;
         }),
-    body('api_keys')
-        .optional(),
-    body('api_keys.public_key')
-        .optional()
-        .trim(),
-    body('api_keys.private_key')
-        .optional()
-        .trim(),
-    body('api_keys.commerce_code')
-        .optional()
-        .trim(),
-    body('is_sandbox')
-        .optional()
-        .isBoolean().withMessage('El campo is_sandbox debe ser un valor booleano'),
     body('active')
         .optional()
         .isBoolean().withMessage('El campo active debe ser un valor booleano')
@@ -79,19 +60,7 @@ const validateUpdatePaymentMethod = [
         .optional()
         .trim()
         .notEmpty().withMessage('El tipo no puede estar vacío')
-        .isIn([
-            'debito', 
-            'credito', 
-            'transferencia', 
-            'efectivo', 
-            'otro',
-            'webpay', 
-            'mercadopago', 
-            'payku', 
-            'flow', 
-            'kushki',
-            'payu'
-        ]).withMessage('Tipo de pago no válido'),
+        .isIn(['debito', 'credito', 'transferencia', 'efectivo', 'otro']).withMessage('Tipo de pago no válido'),
     body('description')
         .optional()
         .trim(),
@@ -129,20 +98,6 @@ const validateUpdatePaymentMethod = [
             }
             return true;
         }),
-    body('api_keys')
-        .optional(),
-    body('api_keys.public_key')
-        .optional()
-        .trim(),
-    body('api_keys.private_key')
-        .optional()
-        .trim(),
-    body('api_keys.commerce_code')
-        .optional()
-        .trim(),
-    body('is_sandbox')
-        .optional()
-        .isBoolean().withMessage('El campo is_sandbox debe ser un valor booleano'),
     body('active')
         .optional()
         .isBoolean().withMessage('El campo active debe ser un valor booleano')
