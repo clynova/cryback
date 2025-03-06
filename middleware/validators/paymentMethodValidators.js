@@ -60,7 +60,7 @@ const validateUpdatePaymentMethod = [
         .optional()
         .trim()
         .notEmpty().withMessage('El tipo no puede estar vacío')
-        .isIn(['debito', 'credito', 'transferencia', 'efectivo', 'otro']).withMessage('Tipo de pago no válido'),
+        .isIn(['transferencia', 'webpay', 'mercadopago', 'flow']).withMessage('Tipo de pago no válido'),
     body('description')
         .optional()
         .trim(),
