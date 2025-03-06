@@ -1,10 +1,11 @@
 import express from 'express';
-import { checkAuth } from '../middleware/authMiddleware.js';
+import { checkAuth, checkRole } from '../middleware/authMiddleware.js';
 import {
     initiatePayment,
     processWebpayReturn,
     processMercadoPagoWebhook,
-    getPaymentStatus
+    getPaymentStatus,
+    updateReturnUrl
 } from '../controllers/paymentProcessingController.js';
 import { param } from 'express-validator';
 
@@ -16,14 +17,19 @@ const validateOrderId = [
         .isMongoId().withMessage('ID de orden no válido')
 ];
 
+// Ruta para actualizar la URL de retorno (solo administradores)
+paymentProcessingRoutes.post('/update-return-url', checkAuth, checkRole('admin'), updateReturnUrl);
+
 // Ruta para iniciar proceso de pago
 paymentProcessingRoutes.post('/initiate/:orderId', checkAuth, validateOrderId, initiatePayment);
 
 // Ruta para obtener estado de pago
 paymentProcessingRoutes.get('/status/:orderId', checkAuth, validateOrderId, getPaymentStatus);
 
-// Rutas para WebPay
-paymentProcessingRoutes.post('/webpay/return', processWebpayReturn);
+// Rutas para WebPay - aceptar tanto GET como POST
+paymentProcessingRoutes.route('/webpay/return')
+    .get(processWebpayReturn)
+    .post(processWebpayReturn);
 
 // Rutas para MercadoPago
 paymentProcessingRoutes.post('/mercadopago/webhook', processMercadoPagoWebhook);

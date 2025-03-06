@@ -3,13 +3,13 @@
  * Requiere instalar: npm install transbank-sdk
  */
 import pkg from 'transbank-sdk';
-const { WebpayPlus, Environment } = pkg;
+const { WebpayPlus, Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } = pkg;
 
 // Función auxiliar para validar URL
 const isValidUrl = (string) => {
     try {
-        new URL(string);
-        return true;
+        const url = new URL(string);
+        return url.protocol === 'https:' || url.protocol === 'http:';
     } catch (_) {
         return false;
     }
@@ -35,47 +35,50 @@ export const initTransaction = async (amount, buyOrder, returnUrl, sessionId) =>
     }
     
     if (!returnUrl || !isValidUrl(returnUrl)) {
-      throw new Error(`La URL de retorno '${returnUrl}' no es válida`);
+      throw new Error(`La URL de retorno '${returnUrl}' no es válida. Debe ser una URL HTTP o HTTPS válida.`);
     }
     
     if (!sessionId) {
       throw new Error('El ID de sesión es requerido');
     }
 
-    // Verificar variables de entorno requeridas
-    if (!process.env.WEBPAY_COMMERCE_CODE) {
-      throw new Error('WEBPAY_COMMERCE_CODE no está configurado en las variables de entorno');
+    // Configuración según entorno
+    let options;
+    if (process.env.WEBPAY_ENVIRONMENT === 'production') {
+      options = new Options(
+        process.env.WEBPAY_COMMERCE_CODE,
+        process.env.WEBPAY_API_KEY,
+        Environment.Production
+      );
+    } else {
+      // Usar credenciales de integración por defecto
+      options = new Options(
+        IntegrationCommerceCodes.WEBPAY_PLUS,
+        IntegrationApiKeys.WEBPAY,
+        Environment.Integration
+      );
     }
-    if (!process.env.WEBPAY_API_KEY) {
-      throw new Error('WEBPAY_API_KEY no está configurado en las variables de entorno');
-    }
-    
-    // Configuración según entorno (sandbox o producción)
-    const environment = process.env.WEBPAY_ENVIRONMENT === 'production' 
-      ? Environment.Production 
-      : Environment.Integration;
 
-    const tx = new WebpayPlus.Transaction(
-      process.env.WEBPAY_COMMERCE_CODE,
-      process.env.WEBPAY_API_KEY,
-      environment
-    );
+    // Crear instancia de WebpayPlus
+    const tx = new WebpayPlus.Transaction(options);
     
     console.log('Iniciando transacción WebPay con:', {
       buyOrder,
       sessionId,
       amount,
       returnUrl,
-      environment: process.env.WEBPAY_ENVIRONMENT || 'integration'
+      environment: process.env.WEBPAY_ENVIRONMENT || 'integration',
+      commerceCode: options.commerceCode
     });
     
     // Iniciar transacción
     const response = await tx.create(buyOrder, sessionId, amount, returnUrl);
+    console.log('Respuesta de WebPay:', response);
     return response;
   } catch (error) {
-    console.error('Error iniciando transacción WebPay:', error);
+    console.error('Error detallado de WebPay:', error);
     if (error.message.includes('Invalid URL')) {
-      throw new Error(`URL de retorno inválida: ${returnUrl}. La URL debe ser accesible públicamente y usar HTTPS en producción.`);
+      throw new Error(`URL de retorno inválida: ${returnUrl}. Asegúrate de que la URL sea accesible y use el formato correcto.`);
     }
     throw error;
   }
@@ -88,17 +91,34 @@ export const initTransaction = async (amount, buyOrder, returnUrl, sessionId) =>
  */
 export const confirmTransaction = async (token) => {
   try {
-    const tx = new WebpayPlus.Transaction(
-      process.env.WEBPAY_COMMERCE_CODE,
-      process.env.WEBPAY_API_KEY,
-      process.env.WEBPAY_ENVIRONMENT
-    );
+    // Configuración según entorno
+    let options;
+    if (process.env.WEBPAY_ENVIRONMENT === 'production') {
+      options = new Options(
+        process.env.WEBPAY_COMMERCE_CODE,
+        process.env.WEBPAY_API_KEY,
+        Environment.Production
+      );
+    } else {
+      // Usar credenciales de integración por defecto
+      options = new Options(
+        IntegrationCommerceCodes.WEBPAY_PLUS,
+        IntegrationApiKeys.WEBPAY,
+        Environment.Integration
+      );
+    }
+
+    // Crear instancia de WebpayPlus
+    const tx = new WebpayPlus.Transaction(options);
+    
+    console.log('Confirmando transacción con token:', token);
     
     // Confirmar la transacción
     const response = await tx.commit(token);
+    console.log('Respuesta de confirmación WebPay:', response);
     return response;
   } catch (error) {
-    console.error('Error confirmando transacción WebPay:', error);
+    console.error('Error detallado confirmando transacción WebPay:', error);
     throw error;
   }
 };
