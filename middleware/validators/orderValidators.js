@@ -2,6 +2,41 @@ import { body } from 'express-validator';
 
 const validateOrder = [
     // Shipping Address Validations
+    body('shippingAddress')
+        .notEmpty().withMessage('La dirección de envío es requerido')
+        .isMongoId().withMessage('El ID de dirección de envío debe ser un ID de MongoDB válido'),
+    // Payment Method Validation
+    body('paymentMethod')
+        .notEmpty().withMessage('El método de pago es requerido')
+        .isMongoId().withMessage('El ID del método de pago debe ser un ID de MongoDB válido'),
+    // Nueva estructura de envío
+    body('shipping').isObject().withMessage('La información de envío debe ser un objeto'),
+    body('shipping.carrier')
+        .notEmpty().withMessage('El transportista es requerido')
+        .isMongoId().withMessage('ID del transportista inválido'),
+    body('shipping.method')
+        .notEmpty().withMessage('El método de envío específico es requerido'),
+
+    body('recipientName')
+        .notEmpty().withMessage('El nombre del destinatario es requerido'),
+    body('phoneContact')
+        .optional().isString().withMessage('El teléfono de contacto debe ser un texto'),
+    body('additionalInstructions').optional().isString().withMessage('Las instrucciones adicionales deben ser un texto'),
+
+];
+
+/*
+
+    "phoneContact": "5512345678",
+    "recipientName": "Carlos Rodríguez",
+    "additionalInstructions": "Tocar el timbre dos veces"
+
+*/
+
+
+/*
+const validateOrder = [
+    // Shipping Address Validations
     body('shippingAddress').isObject().withMessage('La dirección de envío debe ser un objeto'),
     body('shippingAddress.street').notEmpty().withMessage('La calle es requerida'),
     body('shippingAddress.city').notEmpty().withMessage('La ciudad es requerida'),
@@ -32,6 +67,6 @@ const validateOrder = [
             if (value < 0) throw new Error('El costo de envío no puede ser negativo');
             return true;
         })
-];
+];*/
 
 export { validateOrder };
