@@ -3,21 +3,29 @@ import { ShippingMethod } from "../models/ShippingMethod.js";
 const createShippingMethod = async (req, res) => {
     try {
         const shippingMethod = new ShippingMethod(req.body);
-        await shippingMethod.save();
-        res.json(shippingMethod);
+        const savedShippingMethod = await shippingMethod.save();
+        res.status(201).json({
+            success: true,
+            msg: "Método de envío creado correctamente",
+            data: savedShippingMethod
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al crear el método de envío" });
+        res.status(500).json({ success: false, msg: "Error al crear el método de envío" });
     }
 };
 
 const getShippingMethods = async (req, res) => {
     try {
         const shippingMethods = await ShippingMethod.find({ active: true });
-        res.json(shippingMethods);
+        res.status(200).json({
+            success: true,
+            msg: "Métodos de envío enviados",
+            data: shippingMethods
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al obtener los métodos de envío" });
+        res.status(500).json({ success: false, msg: "Error al obtener los métodos de envío" });
     }
 };
 
@@ -26,12 +34,16 @@ const getShippingMethod = async (req, res) => {
     try {
         const shippingMethod = await ShippingMethod.findById(id);
         if (!shippingMethod) {
-            return res.status(404).json({ msg: "Método de envío no encontrado" });
+            return res.status(404).json({ success: false, msg: "Método de envío no encontrado" });
         }
-        res.json(shippingMethod);
+        res.status(200).json({
+            success: true,
+            msg: "Método de envío enviado",
+            data: shippingMethod
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al obtener el método de envío" });
+        res.status(500).json({ success: false, msg: "Error al obtener el método de envío" });
     }
 };
 
@@ -40,7 +52,7 @@ const updateShippingMethod = async (req, res) => {
     try {
         const shippingMethod = await ShippingMethod.findById(id);
         if (!shippingMethod) {
-            return res.status(404).json({ msg: "Método de envío no encontrado" });
+            return res.status(404).json({ success: false, msg: "Método de envío no encontrado" });
         }
 
         // Actualizar campos principales
@@ -55,10 +67,14 @@ const updateShippingMethod = async (req, res) => {
         shippingMethod.active = req.body.active !== undefined ? req.body.active : shippingMethod.active;
 
         await shippingMethod.save();
-        res.json(shippingMethod);
+        res.status(200).json({
+            success: true,
+            msg: "Método de envío modificado correctamente",
+            data: shippingMethod
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al actualizar el método de envío" });
+        res.status(500).json({ success: false, msg: "Error al actualizar el método de envío" });
     }
 };
 
@@ -67,17 +83,24 @@ const deleteShippingMethod = async (req, res) => {
     try {
         const shippingMethod = await ShippingMethod.findById(id);
         if (!shippingMethod) {
-            return res.status(404).json({ msg: "Método de envío no encontrado" });
+            return res.status(404).json({ success: false, msg: "Método de envío no encontrado" });
         }
 
         // Soft delete
         shippingMethod.active = false;
         await shippingMethod.save();
         
-        res.json({ msg: "Método de envío eliminado correctamente" });
+        res.status(200).json({
+            success: true,
+            msg: "Método de envío eliminado correctamente",
+            data: {
+                _id: shippingMethod._id,
+                name: shippingMethod.name
+            }
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al eliminar el método de envío" });
+        res.status(500).json({ success: false, msg: "Error al eliminar el método de envío" });
     }
 };
 
