@@ -15,6 +15,7 @@ import { reviewRoutes } from './routes/reviewRoutes.js';
 import { wishlistRoutes } from './routes/wishlistRoutes.js';
 import { paymentProcessingRoutes } from './routes/paymentProcessingRoutes.js';
 import { shippingMethodRoutes } from './routes/shippingMethodRoutes.js';
+import { paymentMethodRoutes } from './routes/paymentMethodRoutes.js';
 
 // Configurar rutas
 app.use('/api/user', userRoutes);
@@ -26,6 +27,7 @@ app.use('/api/review', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/payments', paymentProcessingRoutes);
 app.use('/api/shipping-methods', shippingMethodRoutes);
+app.use('/api/payment-methods', paymentMethodRoutes);
 
 const PORT = process.env.PORT || 4000;
 
