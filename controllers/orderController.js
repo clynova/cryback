@@ -2,6 +2,7 @@ import { Order } from '../models/Order.js';
 import { OrderDetail } from '../models/OrderDetail.js';
 import { Cart } from '../models/Cart.js';
 import { Product } from '../models/Product.js';
+import { User } from '../models/User.js';
 import { validationResult } from 'express-validator';
 import { ShippingMethod } from "../models/ShippingMethod.js";
 import { PaymentMethod } from '../models/PaymentMethod.js';
@@ -14,44 +15,49 @@ const createOrder = async (req, res) => {
         }
 
         const userId = req.user._id;
-        const { shippingAddress, paymentMethod, shipping } = req.body;
+        const { shippingAddressId, paymentMethod, shippingMethod, recipientName, phoneContact, additionalInstructions } = req.body;
 
+        // Obtener el usuario con sus direcciones
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, msg: "Usuario no encontrado" });
+        }
+
+        // Verificar que la dirección pertenezca al usuario
+        const shippingAddress = user.addresses.id(shippingAddressId);
+        if (!shippingAddress) {
+            return res.status(404).json({ success: false, msg: "Dirección de envío no encontrada o no pertenece al usuario" });
+        }
+
+        // Verificar y obtener el método de pago
         const paymentMethodObject = await PaymentMethod.findById(paymentMethod);
-
+        console.log(`Payment method 1: ${paymentMethod}`);
         if (!paymentMethodObject || !paymentMethodObject.active) {
             return res.status(400).json({ success: false, msg: "Método de pago inválido" });
         }
-
-        // Validar la dirección de envío
-        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city ||
-            !shippingAddress.state || !shippingAddress.zipCode || !shippingAddress.country ||
-            !shippingAddress.recipientName) {
-            return res.status(400).json({ success: false, msg: "Dirección de envío incompleta" });
-        }
+        console.log(`Payment method: ${paymentMethodObject}`);
 
         // Verificar y obtener el transportista (carrier)
-        const carrier = await ShippingMethod.findById(shipping.carrier);
+        const carrier = await ShippingMethod.findById(shippingMethod);
         if (!carrier || !carrier.active) {
-            return res.status(404).json({ success: false, msg: "Transportista no válido" });
+            return res.status(404).json({ success: false, msg: "Método de envío inválido" });
         }
 
-        // Verificar que el método específico exista en el transportista
-        const selectedMethod = carrier.methods.find(m => m.name === shipping.method);
+        // Seleccionar el primer método de envío por defecto si hay múltiples
+        const selectedMethod = carrier.methods.length > 0 ? carrier.methods[0] : null;
         if (!selectedMethod) {
-            return res.status(404).json({ success: false, msg: "Método de envío no válido para este transportista" });
+            return res.status(404).json({ success: false, msg: "No hay métodos de envío disponibles para este transportista" });
         }
 
         // Calcular fecha estimada de entrega (basada en el texto del delivery_time)
         const estimatedDeliveryDate = new Date();
-        // Extraer número de días del texto de delivery_time (ej: "5-7 días hábiles" -> 7)
         const deliveryDaysMatch = selectedMethod.delivery_time.match(/(\d+)\s*(?:días|días hábiles|day|days)/);
         let daysToAdd = 7; // Valor por defecto si no se puede determinar
-
+        
         if (deliveryDaysMatch && deliveryDaysMatch[1]) {
             const maxDays = parseInt(deliveryDaysMatch[1], 10);
             daysToAdd = maxDays;
         }
-
         estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + daysToAdd);
 
         // Buscar el carrito del usuario
@@ -61,7 +67,7 @@ const createOrder = async (req, res) => {
         }
 
         // Calcular el total de la orden y verificar el stock
-        let total = 0;
+        let subtotal = 0;
         let totalWeight = 0; // Para calcular gastos de envío basados en peso
 
         for (const item of cart.products) {
@@ -72,7 +78,7 @@ const createOrder = async (req, res) => {
             if (product.stock < item.quantity) {
                 return res.status(400).json({ success: false, msg: `Stock insuficiente para el producto: ${product.name}` });
             }
-            total += product.price * item.quantity;
+            subtotal += product.price * item.quantity;
 
             // Si el producto tiene un campo weight, sumarlo al peso total
             if (product.weight) {
@@ -81,26 +87,43 @@ const createOrder = async (req, res) => {
         }
 
         // Calcular el costo de envío basado en peso si es necesario
-        // (si no viene en la petición, lo calculamos)
-        let shippingCost = shipping.cost;
-        if (!shippingCost && totalWeight > 0) {
-            shippingCost = selectedMethod.base_cost + (totalWeight * selectedMethod.extra_cost_per_kg);
-        } else if (!shippingCost) {
-            // Si no hay peso ni costo proporcionado, usar el costo base
-            shippingCost = selectedMethod.base_cost;
+        let shippingCost = selectedMethod.base_cost;
+        if (totalWeight > 0) {
+            shippingCost += (totalWeight * selectedMethod.extra_cost_per_kg);
         }
 
-        // Crear la orden
+
+        const subtotalEnvio = subtotal + shippingCost;
+
+        // Calcular comisión del método de pago
+        const paymentCommission = (subtotalEnvio * paymentMethodObject.commission_percentage) / 100;
+        
+        // Calcular el total final
+        const total = subtotalEnvio + paymentCommission;
+
+        // Crear la orden con la dirección completa del usuario
         const order = new Order({
             userId,
             orderDate: new Date(),
             status: "pending", // Estado inicial
-            total: total + shippingCost,
-            shippingAddress,
+            total,
+            shippingAddress: {
+                street: shippingAddress.street,
+                city: shippingAddress.city,
+                state: shippingAddress.state,
+                country: shippingAddress.country,
+                zipCode: shippingAddress.zipCode,
+                reference: shippingAddress.reference || '',
+                phoneContact: phoneContact || '', // Campo adicional
+                recipientName: recipientName || shippingAddress.recipientName || user.firstName + ' ' + user.lastName,
+                additionalInstructions: additionalInstructions || '' // Campo adicional
+            },
             paymentMethod: paymentMethod.toString(), 
             payment: {
                 status: 'pending', // Estado inicial del pago
-                currency: 'CLP'    // Moneda por defecto
+                currency: 'CLP',   // Moneda por defecto
+                amount: total,
+                provider: paymentMethodObject.provider
             },
             shipping: {
                 carrier: carrier._id,
@@ -110,8 +133,6 @@ const createOrder = async (req, res) => {
             },
             estimatedDeliveryDate,
         });
-
-        console.log("order", order);
 
         // Guardar la orden en la base de datos
         await order.save();
@@ -143,7 +164,17 @@ const createOrder = async (req, res) => {
         await order.populate('shipping.carrier');
 
         // Responder con la orden creada
-        res.status(201).json({ success: true, msg: "Orden creada exitosamente", order });
+        res.status(201).json({ 
+            success: true, 
+            msg: "Orden creada exitosamente", 
+            order,
+            summary: {
+                subtotal,
+                shippingCost,
+                paymentCommission,
+                total
+            }
+        });
     } catch (err) {
         console.error("Error al crear la orden:", err);
         

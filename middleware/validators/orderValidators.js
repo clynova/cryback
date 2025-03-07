@@ -1,72 +1,33 @@
 import { body } from 'express-validator';
 
 const validateOrder = [
-    // Shipping Address Validations
-    body('shippingAddress')
-        .notEmpty().withMessage('La dirección de envío es requerido')
+    // Shipping Address ID Validation
+    body('shippingAddressId')
+        .notEmpty().withMessage('La dirección de envío es requerida')
         .isMongoId().withMessage('El ID de dirección de envío debe ser un ID de MongoDB válido'),
+    
     // Payment Method Validation
     body('paymentMethod')
         .notEmpty().withMessage('El método de pago es requerido')
         .isMongoId().withMessage('El ID del método de pago debe ser un ID de MongoDB válido'),
-    // Nueva estructura de envío
-    body('shipping').isObject().withMessage('La información de envío debe ser un objeto'),
-    body('shipping.carrier')
-        .notEmpty().withMessage('El transportista es requerido')
-        .isMongoId().withMessage('ID del transportista inválido'),
-    body('shipping.method')
-        .notEmpty().withMessage('El método de envío específico es requerido'),
-
+    
+    // Shipping Method (carrier) Validation
+    body('shippingMethod')
+        .notEmpty().withMessage('El método de envío es requerido')
+        .isMongoId().withMessage('ID del método de envío inválido'),
+    
+    // Additional Address Information
     body('recipientName')
-        .notEmpty().withMessage('El nombre del destinatario es requerido'),
+        .optional()
+        .isString().withMessage('El nombre del destinatario debe ser un texto'),
+    
     body('phoneContact')
-        .optional().isString().withMessage('El teléfono de contacto debe ser un texto'),
-    body('additionalInstructions').optional().isString().withMessage('Las instrucciones adicionales deben ser un texto'),
-
+        .optional()
+        .isString().withMessage('El teléfono de contacto debe ser un texto'),
+    
+    body('additionalInstructions')
+        .optional()
+        .isString().withMessage('Las instrucciones adicionales deben ser un texto'),
 ];
-
-/*
-
-    "phoneContact": "5512345678",
-    "recipientName": "Carlos Rodríguez",
-    "additionalInstructions": "Tocar el timbre dos veces"
-
-*/
-
-
-/*
-const validateOrder = [
-    // Shipping Address Validations
-    body('shippingAddress').isObject().withMessage('La dirección de envío debe ser un objeto'),
-    body('shippingAddress.street').notEmpty().withMessage('La calle es requerida'),
-    body('shippingAddress.city').notEmpty().withMessage('La ciudad es requerida'),
-    body('shippingAddress.state').notEmpty().withMessage('El estado es requerido'),
-    body('shippingAddress.zipCode').notEmpty().withMessage('El código postal es requerido'),
-    body('shippingAddress.country').notEmpty().withMessage('El país es requerido'),
-    body('shippingAddress.recipientName').notEmpty().withMessage('El nombre del destinatario es requerido'),
-    body('shippingAddress.reference').optional().isString().withMessage('La referencia debe ser un texto'),
-    body('shippingAddress.phoneContact').optional().isString().withMessage('El teléfono de contacto debe ser un texto'),
-    body('shippingAddress.additionalInstructions').optional().isString().withMessage('Las instrucciones adicionales deben ser un texto'),
-    
-    // Payment Method Validation
-    body('paymentMethod')
-        .notEmpty().withMessage('El método de pago es requerido')
-        .isMongoId().withMessage('El ID del método de pago debe ser un ID de MongoDB válido'),
-    
-    // Nueva estructura de envío
-    body('shipping').isObject().withMessage('La información de envío debe ser un objeto'),
-    body('shipping.carrier')
-        .notEmpty().withMessage('El transportista es requerido')
-        .isMongoId().withMessage('ID del transportista inválido'),
-    body('shipping.method')
-        .notEmpty().withMessage('El método de envío específico es requerido'),
-    body('shipping.cost')
-        .notEmpty().withMessage('El costo de envío es requerido')
-        .isNumeric().withMessage('El costo de envío debe ser un número')
-        .custom(value => {
-            if (value < 0) throw new Error('El costo de envío no puede ser negativo');
-            return true;
-        })
-];*/
 
 export { validateOrder };
