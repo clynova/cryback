@@ -20,11 +20,11 @@ let CURRENT_RETURN_URL = process.env.WEBPAY_RETURN_URL;
 export const updateReturnUrl = async (req, res) => {
     try {
         const { url } = req.body;
-        
+
         if (!url) {
-            return res.status(400).json({ 
-                success: false, 
-                msg: "La URL es requerida" 
+            return res.status(400).json({
+                success: false,
+                msg: "La URL es requerida"
             });
         }
 
@@ -32,31 +32,31 @@ export const updateReturnUrl = async (req, res) => {
         try {
             const urlObj = new URL(url);
             if (urlObj.protocol !== 'https:') {
-                return res.status(400).json({ 
-                    success: false, 
-                    msg: "La URL debe usar HTTPS" 
+                return res.status(400).json({
+                    success: false,
+                    msg: "La URL debe usar HTTPS"
                 });
             }
         } catch (error) {
-            return res.status(400).json({ 
-                success: false, 
-                msg: "URL inválida" 
+            return res.status(400).json({
+                success: false,
+                msg: "URL inválida"
             });
         }
 
         // Actualizar la URL global
         CURRENT_RETURN_URL = url;
-        
-        return res.json({ 
-            success: true, 
+
+        return res.json({
+            success: true,
             msg: "URL de retorno actualizada correctamente",
             current_url: CURRENT_RETURN_URL
         });
     } catch (error) {
         console.error('Error actualizando URL de retorno:', error);
-        return res.status(500).json({ 
-            success: false, 
-            msg: "Error actualizando la URL de retorno" 
+        return res.status(500).json({
+            success: false,
+            msg: "Error actualizando la URL de retorno"
         });
     }
 };
@@ -221,7 +221,7 @@ export const processWebpayReturn = async (req, res) => {
     try {
         // Obtener token_ws ya sea de POST o GET
         const token_ws = req.method === 'POST' ? req.body.token_ws : req.query.token_ws;
-        
+
         console.log('Método de la petición:', req.method);
         console.log('Token recibido:', token_ws);
         console.log('Query params:', req.query);
@@ -229,7 +229,7 @@ export const processWebpayReturn = async (req, res) => {
 
         if (!token_ws) {
             console.log('No se recibió token_ws');
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=no_token`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/confirmation/failure?reason=no_token`);
         }
 
         // Confirmar la transacción con WebPay
@@ -265,6 +265,9 @@ export const processWebpayReturn = async (req, res) => {
             return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=order_not_found`);
         }
 
+
+        console.log(paymentResult)
+
         // Actualizar el estado según la respuesta
         if (paymentResult.response_code === 0) {
             // Pago aprobado
@@ -275,7 +278,7 @@ export const processWebpayReturn = async (req, res) => {
             await order.save();
 
             console.log('Pago completado exitosamente para la orden:', order._id);
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/success?order_id=${order._id}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/confirmation/success?order_id=${order._id}`);
         } else {
             // Pago rechazado
             order.payment.status = 'failed';
@@ -283,7 +286,7 @@ export const processWebpayReturn = async (req, res) => {
             await order.save();
 
             console.log('Pago rechazado para la orden:', order._id);
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=rejected&order_id=${order._id}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/confirmation/failure?reason=rejected&order_id=${order._id}`);
         }
 
     } catch (error) {
@@ -356,8 +359,12 @@ export const processMercadoPagoWebhook = async (req, res) => {
  */
 export const getPaymentStatus = async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
+        }
         const { orderId } = req.params;
-
+        
         // Buscar la orden
         const order = await Order.findById(orderId);
         if (!order) {

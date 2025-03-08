@@ -17,6 +17,7 @@ const validateOrderId = [
         .isMongoId().withMessage('ID de orden no válido')
 ];
 
+
 // Ruta para actualizar la URL de retorno (solo administradores)
 paymentProcessingRoutes.post('/update-return-url', checkAuth, checkRole('admin'), updateReturnUrl);
 
