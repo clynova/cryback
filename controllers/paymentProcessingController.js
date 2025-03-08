@@ -265,9 +265,6 @@ export const processWebpayReturn = async (req, res) => {
             return res.redirect(`${process.env.FRONTEND_URL}/checkout/failure?reason=order_not_found`);
         }
 
-
-        console.log(paymentResult)
-
         // Actualizar el estado según la respuesta
         if (paymentResult.response_code === 0) {
             // Pago aprobado
@@ -275,6 +272,7 @@ export const processWebpayReturn = async (req, res) => {
             order.payment.transactionId = paymentResult.transaction_id;
             order.payment.paymentDetails = paymentResult;
             order.payment.paymentDate = new Date();
+            order.status = 'completed';
             await order.save();
 
             console.log('Pago completado exitosamente para la orden:', order._id);
@@ -283,10 +281,11 @@ export const processWebpayReturn = async (req, res) => {
             // Pago rechazado
             order.payment.status = 'failed';
             order.payment.paymentDetails = paymentResult;
+            order.status = 'canceled';
             await order.save();
 
             console.log('Pago rechazado para la orden:', order._id);
-            return res.redirect(`${process.env.FRONTEND_URL}/checkout/confirmation/failure?reason=rejected&order_id=${order._id}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/checkout/confirmation/failure?order_id=${order._id}`);
         }
 
     } catch (error) {
@@ -364,7 +363,7 @@ export const getPaymentStatus = async (req, res) => {
             return res.status(400).json({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
         const { orderId } = req.params;
-        
+
         // Buscar la orden
         const order = await Order.findById(orderId);
         if (!order) {
