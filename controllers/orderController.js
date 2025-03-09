@@ -66,9 +66,9 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ success: false, msg: "El carrito está vacío" });
         }
 
-        // Calcular el total de la orden y verificar el stock
+        // Calcular el subtotal de productos y verificar el stock
         let subtotal = 0;
-        let totalWeight = 0; // Para calcular gastos de envío basados en peso
+        let totalWeight = 0;
 
         for (const item of cart.products) {
             const product = await Product.findById(item.productId);
@@ -80,13 +80,12 @@ const createOrder = async (req, res) => {
             }
             subtotal += product.price * item.quantity;
 
-            // Si el producto tiene un campo weight, sumarlo al peso total
             if (product.weight) {
                 totalWeight += product.weight * item.quantity;
             }
         }
 
-        // Calcular el costo de envío basado en peso si es necesario
+        // Calcular el costo de envío
         let shippingCost = selectedMethod.base_cost;
         if (totalWeight > 0) {
             shippingCost += (totalWeight * selectedMethod.extra_cost_per_kg);
@@ -100,12 +99,16 @@ const createOrder = async (req, res) => {
         // Calcular el total final
         const total = subtotalEnvio + paymentCommission;
 
-        // Crear la orden con la dirección completa del usuario
+
+        
+
+        // Crear la orden con el nuevo campo subtotal
         const order = new Order({
             userId,
             orderDate: new Date(),
-            status: "pending", // Estado inicial
-            total,
+            status: "pending",
+            subtotal, // Agregamos el subtotal de productos
+            total,    // Total incluye envío y comisiones
             shippingAddress: {
                 street: shippingAddress.street,
                 city: shippingAddress.city,
@@ -164,16 +167,16 @@ const createOrder = async (req, res) => {
         // Poblar la información del transportista en la respuesta
         await order.populate('shipping.carrier');
 
-        // Responder con la orden creada
+        // Actualizar la respuesta para incluir el desglose detallado
         res.status(201).json({ 
             success: true, 
             msg: "Orden creada exitosamente", 
             order,
-            summary: {
-                subtotal,
-                shippingCost,
-                paymentCommission,
-                total
+            costBreakdown: {
+                subtotal,              // Costo base de productos
+                shippingCost,         // Costo de envío
+                paymentCommission,    // Comisión del método de pago
+                total                 // Total final
             }
         });
     } catch (err) {

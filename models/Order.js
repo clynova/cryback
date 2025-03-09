@@ -5,7 +5,8 @@ const orderSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         orderDate: { type: Date, default: Date.now },
         status: { type: String, required: true, enum: ["pending", "completed", "canceled"] },
-        total: { type: Number, required: true },
+        subtotal: { type: Number, required: true }, // Subtotal solo de productos
+        total: { type: Number, required: true },    // Total con envío y comisiones
         shippingAddress: {
             street: { type: String, required: true, trim: true },
             city: { type: String, required: true, trim: true },
