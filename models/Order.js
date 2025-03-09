@@ -32,7 +32,9 @@ const orderSchema = new mongoose.Schema(
             amount: { type: Number },
             currency: { type: String, default: 'CLP' },
             paymentDate: { type: Date },
-            paymentDetails: { type: mongoose.Schema.Types.Mixed }
+            paymentDetails: { type: mongoose.Schema.Types.Mixed },
+            commissionPercentage: { type: Number }, // Porcentaje de comisión aplicado
+            commissionAmount: { type: Number }      // Monto de la comisión cobrada
         },
         shipping: {
             carrier: {

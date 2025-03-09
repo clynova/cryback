@@ -108,7 +108,7 @@ export const initiatePayment = async (req, res) => {
                 // Iniciar transacción con WebPay
                 // Crear un identificador más corto para respetar el límite de 26 caracteres
                 const orderId = order._id.toString();
-                // Usar solo los últimos 12 caracteres para estar seguro de no exceder el límite
+                // ed solo los últimos 12 caracteres para estar seguro de no exceder el límite
                 const shortOrderId = orderId.substring(orderId.length - 12);
                 const buyOrder = `OC${shortOrderId}`;
 
@@ -272,6 +272,7 @@ export const processWebpayReturn = async (req, res) => {
             order.payment.transactionId = paymentResult.transaction_id;
             order.payment.paymentDetails = paymentResult;
             order.payment.paymentDate = new Date();
+            // Mantener los valores de comisión existentes
             order.status = 'completed';
             await order.save();
 
@@ -281,6 +282,7 @@ export const processWebpayReturn = async (req, res) => {
             // Pago rechazado
             order.payment.status = 'failed';
             order.payment.paymentDetails = paymentResult;
+            // Mantener los valores de comisión existentes incluso si falla
             order.status = 'canceled';
             await order.save();
 
@@ -323,6 +325,8 @@ export const processMercadoPagoWebhook = async (req, res) => {
                     order.payment.transactionId = paymentData.paymentId;
                     order.payment.paymentDetails = paymentData;
                     order.payment.paymentDate = new Date();
+                    // Mantener los valores de comisión existentes
+                    order.status = 'completed';
                     break;
 
                 case 'pending':
@@ -336,6 +340,7 @@ export const processMercadoPagoWebhook = async (req, res) => {
                 case 'refunded':
                     order.payment.status = 'failed';
                     order.payment.paymentDetails = paymentData;
+                    order.status = 'canceled';
                     break;
             }
 
@@ -387,4 +392,4 @@ export const getPaymentStatus = async (req, res) => {
         console.error('Error obteniendo estado del pago:', error);
         res.status(500).json({ success: false, msg: "Error en el servidor" });
     }
-}; 
+};

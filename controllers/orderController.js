@@ -92,7 +92,6 @@ const createOrder = async (req, res) => {
             shippingCost += (totalWeight * selectedMethod.extra_cost_per_kg);
         }
 
-
         const subtotalEnvio = subtotal + shippingCost;
 
         // Calcular comisión del método de pago
@@ -123,7 +122,9 @@ const createOrder = async (req, res) => {
                 status: 'pending', // Estado inicial del pago
                 currency: 'CLP',   // Moneda por defecto
                 amount: total,
-                provider: paymentMethodObject.provider
+                provider: paymentMethodObject.provider,
+                commissionPercentage: paymentMethodObject.commission_percentage,
+                commissionAmount: paymentCommission
             },
             shipping: {
                 carrier: carrier._id,
