@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 
 const validateOrder = [
     // Shipping Address ID Validation
@@ -30,4 +30,10 @@ const validateOrder = [
         .isString().withMessage('Las instrucciones adicionales deben ser un texto'),
 ];
 
-export { validateOrder };
+const validateOrderId = [
+    param('orderId')
+        .notEmpty().withMessage('El ID de la orden es requerido')
+        .isMongoId().withMessage('El ID de la orden debe ser un ID de MongoDB válido')
+];
+
+export { validateOrder, validateOrderId };

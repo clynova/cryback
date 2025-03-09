@@ -224,27 +224,35 @@ const getOrders = async (req, res) => {
             .populate('shipping.carrier')
             .populate('userId', 'name email');
 
-        res.json(orders);
+        res.status(200).json({ 
+            success: true, 
+            orders: orders 
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al obtener las órdenes" });
+        res.status(500).json({ 
+            success: false, 
+            msg: "Error al obtener las órdenes" 
+        });
     }
 };
 
 const getOrder = async (req, res) => {
-    const { id } = req.params;
+    const { orderId } = req.params;
     try {
-        const order = await Order.findById(id)
+        const order = await Order.findById(orderId)
             .populate('shipping.carrier')
             .populate('userId', 'name email');
-
+        
         if (!order) {
-            return res.status(404).json({ msg: "Orden no encontrada" });
+            return res.status(404).json({ 
+                success: false, 
+                msg: "Orden no encontrada" 
+            });
         }
-
+        
         // Obtener detalles de la orden
         const orderDetails = await OrderDetail.find({ orderId: order._id }).populate('productId');
-
         const responseOrder = {
             ...order.toObject(),
             products: orderDetails.map(detail => ({
@@ -253,11 +261,17 @@ const getOrder = async (req, res) => {
                 price: detail.price
             }))
         };
-
-        res.json(responseOrder);
+        
+        res.status(200).json({ 
+            success: true, 
+            order: responseOrder 
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al obtener la orden" });
+        res.status(500).json({ 
+            success: false, 
+            msg: "Error al obtener la orden" 
+        });
     }
 };
 
@@ -266,7 +280,10 @@ const updateOrder = async (req, res) => {
     try {
         const order = await Order.findById(id);
         if (!order) {
-            return res.status(404).json({ msg: "Orden no encontrada" });
+            return res.status(404).json({ 
+                success: false, 
+                msg: "Orden no encontrada" 
+            });
         }
 
         // Si se está actualizando el transportista y el método de envío
@@ -274,14 +291,20 @@ const updateOrder = async (req, res) => {
             if (req.body.shipping.carrier) {
                 const carrier = await ShippingMethod.findById(req.body.shipping.carrier);
                 if (!carrier || !carrier.active) {
-                    return res.status(404).json({ msg: "Transportista no válido" });
+                    return res.status(404).json({ 
+                        success: false, 
+                        msg: "Transportista no válido" 
+                    });
                 }
 
                 // Si también se proporciona el método específico
                 if (req.body.shipping.method) {
                     const selectedMethod = carrier.methods.find(m => m.name === req.body.shipping.method);
                     if (!selectedMethod) {
-                        return res.status(404).json({ msg: "Método de envío no válido para este transportista" });
+                        return res.status(404).json({ 
+                            success: false, 
+                            msg: "Método de envío no válido para este transportista" 
+                        });
                     }
 
                     // Actualizar costos y fechas
@@ -329,10 +352,17 @@ const updateOrder = async (req, res) => {
         await order.save();
         await order.populate('shipping.carrier');
 
-        res.json(order);
+        res.status(200).json({ 
+            success: true, 
+            msg: "Orden actualizada correctamente",
+            order: order 
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al actualizar la orden" });
+        res.status(500).json({ 
+            success: false, 
+            msg: "Error al actualizar la orden" 
+        });
     }
 };
 
@@ -341,13 +371,22 @@ const deleteOrder = async (req, res) => {
     try {
         const order = await Order.findById(id);
         if (!order) {
-            return res.status(404).json({ msg: "Orden no encontrada" });
+            return res.status(404).json({ 
+                success: false, 
+                msg: "Orden no encontrada" 
+            });
         }
         await order.deleteOne();
-        res.json({ msg: "Orden eliminada correctamente" });
+        res.status(200).json({ 
+            success: true, 
+            msg: "Orden eliminada correctamente" 
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ msg: "Error al eliminar la orden" });
+        res.status(500).json({ 
+            success: false, 
+            msg: "Error al eliminar la orden" 
+        });
     }
 };
 
