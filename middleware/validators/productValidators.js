@@ -29,14 +29,6 @@ const validateProductRegistration = [
         .optional()
         .isInt({ min: 0 }).withMessage('El stock debe ser un número entero positivo'),
 
-    body('brandId')
-        .optional()
-        .isMongoId().withMessage('El ID de la marca debe ser un ObjectId válido'),
-
-    body('modelId')
-        .optional()
-        .isMongoId().withMessage('El ID del modelo debe ser un ObjectId válido'),
-
     body('createdAt')
         .optional()
         .isISO8601().withMessage('La fecha de creación debe ser una fecha válida'),
@@ -78,14 +70,6 @@ const validateProductModificar = [
     body('stock')
         .optional()
         .isInt({ min: 0, max: 100000 }).withMessage('El stock debe ser un número entero entre 0 y 100,000'),
-
-    body('brandId')
-        .optional()
-        .isMongoId().withMessage('El ID de la marca debe ser un ObjectId válido'),
-
-    body('modelId')
-        .optional()
-        .isMongoId().withMessage('El ID del modelo debe ser un ObjectId válido'),
 
     body('createdAt')
         .optional()

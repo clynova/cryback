@@ -6,9 +6,7 @@ const productSchema = new mongoose.Schema(
         description: { type: String, required: true, trim: true },
         price: { type: Number, required: true },
         images: [{ type: String, trim: true }],
-        stock: { type: Number, default: 0 },
-        brandId: { type: mongoose.Schema.Types.ObjectId, ref: "Brand" },
-        modelId: { type: mongoose.Schema.Types.ObjectId, ref: "Model" },
+        stock: { type: Number, default: 0 }
     },
     { timestamps: true } // Agrega automáticamente createdAt y updatedAt
 );

@@ -61,7 +61,7 @@ const updateProduct = async (req, res) => {
         }
 
         const { _id } = req.params;
-        const { name, description, price, images, stock, brandId, modelId } = req.body;
+        const { name, description, price, images, stock } = req.body;
 
 
 
@@ -75,8 +75,6 @@ const updateProduct = async (req, res) => {
         if (price) product.price = price;
         if (images) product.images = images;
         if (stock !== undefined) product.stock = stock;
-        if (brandId) product.brandId = brandId;
-        if (modelId) product.modelId = modelId;
         product.updatedAt = new Date();
         await product.save()
 
