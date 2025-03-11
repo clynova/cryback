@@ -79,38 +79,6 @@ const apiEndpoints = {
             info: 'Invalidar token de autenticación.'
         }
     ],
-    'Categorías': [
-        { 
-            method: 'GET', 
-            path: '/api/category', 
-            description: 'Obtener todas las categorías',
-            info: 'No requiere parámetros.'
-        },
-        { 
-            method: 'POST', 
-            path: '/api/category', 
-            description: 'Crear nueva categoría',
-            info: 'Envia un JSON con name y descripción opcional.'
-        },
-        { 
-            method: 'GET', 
-            path: '/api/category/:id', 
-            description: 'Obtener detalle de una categoría',
-            info: 'Requiere el id de la categoría en la URL.'
-        },
-        { 
-            method: 'PUT', 
-            path: '/api/category/:id', 
-            description: 'Actualizar categoría',
-            info: 'Requiere el id en la URL y JSON con campos a actualizar.'
-        },
-        { 
-            method: 'DELETE', 
-            path: '/api/category/:id', 
-            description: 'Eliminar categoría',
-            info: 'Requiere el id en la URL.'
-        }
-    ],
     'Productos': [
         { 
             method: 'GET', 

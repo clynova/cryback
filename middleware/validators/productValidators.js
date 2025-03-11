@@ -25,10 +25,6 @@ const validateProductRegistration = [
             return true;
         }),
 
-    body('categoryId')
-        .notEmpty().withMessage('El ID de la categoría es requerido')
-        .isMongoId().withMessage('El ID de la categoría debe ser un ObjectId válido'),
-
     body('stock')
         .optional()
         .isInt({ min: 0 }).withMessage('El stock debe ser un número entero positivo'),
@@ -78,10 +74,6 @@ const validateProductModificar = [
             }
             return true;
         }),
-
-    body('categoryId')
-        .optional()
-        .isMongoId().withMessage('El ID de la categoría debe ser un ObjectId válido'),
 
     body('stock')
         .optional()

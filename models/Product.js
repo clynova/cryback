@@ -5,8 +5,7 @@ const productSchema = new mongoose.Schema(
         name: { type: String, required: true, trim: true },
         description: { type: String, required: true, trim: true },
         price: { type: Number, required: true },
-        images: [{ type: String, trim: true }], // Arreglo de URLs de imágenes
-        categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+        images: [{ type: String, trim: true }],
         stock: { type: Number, default: 0 },
         brandId: { type: mongoose.Schema.Types.ObjectId, ref: "Brand" },
         modelId: { type: mongoose.Schema.Types.ObjectId, ref: "Model" },
