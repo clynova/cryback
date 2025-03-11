@@ -1,5 +1,4 @@
 import { Product } from "../models/Product.js";
-import { Category } from "../models/Category.js";
 import { validationResult } from 'express-validator';
 
 const products = async (req, res) => {
@@ -34,14 +33,6 @@ const createProduct = async (req, res) => {
             return res.status(400).send({ success: false, msg: "Errores de validación", errors: errors.array() });
         }
 
-        const { categoryId } = req.body;
-
-        // Verificar si la categoría existe
-        const categoriaExiste = await Category.findById(categoryId);
-        if (!categoriaExiste) {
-            return res.status(400).send({ success: false, msg: "La categoría no existe" });
-        }
-
         // Crear el producto si la categoría es válida
         const product = new Product(req.body);
         const productGuardado = await product.save();
@@ -53,7 +44,6 @@ const createProduct = async (req, res) => {
                 _id: productGuardado._id,
                 name: productGuardado.name,
                 description: productGuardado.description,
-                categoryId: productGuardado.categoryId
             }
         });
 
@@ -71,7 +61,7 @@ const updateProduct = async (req, res) => {
         }
 
         const { _id } = req.params;
-        const { name, description, price, images, categoryId, stock, brandId, modelId } = req.body;
+        const { name, description, price, images, stock, brandId, modelId } = req.body;
 
 
 
@@ -84,13 +74,6 @@ const updateProduct = async (req, res) => {
         if (description) product.description = description;
         if (price) product.price = price;
         if (images) product.images = images;
-        if (categoryId) {
-            const categoriaExiste = await Category.findById(categoryId);
-            if (!categoriaExiste) {
-                return res.status(400).send({ success: false, msg: "La categoría no existe" });
-            }
-            product.categoryId = categoryId;
-        }
         if (stock !== undefined) product.stock = stock;
         if (brandId) product.brandId = brandId;
         if (modelId) product.modelId = modelId;
