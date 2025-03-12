@@ -242,7 +242,7 @@ const removeTagsFromProduct = async (req, res) => {
  */
 const findProductsByTags = async (req, res) => {
     try {
-        const { tags, matchAll = 'true' } = req.query;
+        const { tags, matchAll = 'true', page = 1, limit = 10 } = req.query;
 
         if (!tags) {
             return res.status(400).send({
@@ -264,13 +264,32 @@ const findProductsByTags = async (req, res) => {
             query = { tags: { $in: tagArray } };
         }
 
-        const products = await Product.find(query);
+        // Convertir page y limit a números
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        
+        // Calcular el número de documentos a omitir
+        const skip = (pageNum - 1) * limitNum;
+        
+        // Obtener el total de productos que coinciden con la consulta
+        const totalProducts = await Product.countDocuments(query);
+        
+        // Obtener los productos para la página actual
+        const products = await Product.find(query)
+            .skip(skip)
+            .limit(limitNum);
 
         res.status(200).send({
             success: true,
             msg: matchAll === 'true' ?
                 "Productos que coinciden con todas las etiquetas" :
                 "Productos que coinciden con al menos una etiqueta",
+            pagination: {
+                total: totalProducts,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(totalProducts / limitNum)
+            },
             count: products.length,
             products
         });
@@ -282,7 +301,6 @@ const findProductsByTags = async (req, res) => {
             msg: "Error al buscar productos por etiquetas"
         });
     }
-
 };
 /**
  * Renombrar una etiqueta en todo el sistema
@@ -388,4 +406,4 @@ export {
     findProductsByTags,
     renameTag,
     deleteTag
-}; 
+};
