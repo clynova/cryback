@@ -302,6 +302,58 @@ const findProductsByTags = async (req, res) => {
         });
     }
 };
+
+/**
+ * Buscar todos los productos por etiquetas sin paginación
+ */
+const findAllProductsByTags = async (req, res) => {
+    try {
+        const { tags, matchAll = 'true', limit = 10 } = req.query;
+
+        if (!tags) {
+            return res.status(400).send({
+                success: false,
+                msg: "Se requiere al menos una etiqueta para la búsqueda"
+            });
+        }
+
+        // Convertir a array si viene como string
+        const tagArray = Array.isArray(tags) ? tags : tags.split(',');
+
+        let query;
+        // Determina el tipo de búsqueda según el parámetro matchAll
+        if (matchAll === 'true') {
+            // Buscar productos que contengan TODAS las etiquetas especificadas
+            query = { tags: { $all: tagArray } };
+        } else {
+            // Buscar productos que contengan AL MENOS UNA de las etiquetas
+            query = { tags: { $in: tagArray } };
+        }
+
+        const limitNum = parseInt(limit);
+        
+        // Obtener todos los productos que coinciden con la consulta
+        const products = await Product.find(query)
+            .limit(limitNum);
+
+        res.status(200).send({
+            success: true,
+            msg: matchAll === 'true' ?
+                "Productos que coinciden con todas las etiquetas" :
+                "Productos que coinciden con al menos una etiqueta",
+            count: products.length,
+            products
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({
+            success: false,
+            msg: "Error al buscar productos por etiquetas"
+        });
+    }
+};
+
 /**
  * Renombrar una etiqueta en todo el sistema
  */
@@ -404,6 +456,7 @@ export {
     updateProductTags,
     removeTagsFromProduct,
     findProductsByTags,
+    findAllProductsByTags,
     renameTag,
     deleteTag
 };

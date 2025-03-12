@@ -5,18 +5,20 @@ import {
     addTagsToProduct, 
     updateProductTags, 
     removeTagsFromProduct, 
-    findProductsByTags, 
+    findProductsByTags,
+    findAllProductsByTags,
     renameTag, 
     deleteTag 
 } from '../controllers/tagController.js';
 import { checkAuth, checkTokenBlacklist, checkRole } from '../middleware/authMiddleware.js';
-import { validateTagOperations, validateProductID } from '../middleware/validators/tagValidators.js';
+import { validateTagOperations } from '../middleware/validators/tagValidators.js';
 
 const tagRoutes = express.Router();
 
 // Rutas públicas
 tagRoutes.get('/', getAllTags);
 tagRoutes.get('/products', findProductsByTags);
+tagRoutes.get('/products/all', findAllProductsByTags);
 
 // Rutas para gestión de etiquetas de productos específicos
 tagRoutes.get('/product/:productId', getProductTags);
@@ -28,4 +30,4 @@ tagRoutes.delete('/product/:productId', checkAuth, checkTokenBlacklist, checkRol
 tagRoutes.put('/rename', checkAuth, checkTokenBlacklist, checkRole('admin'), renameTag);
 tagRoutes.delete('/:tag', checkAuth, checkTokenBlacklist, checkRole('admin'), deleteTag);
 
-export { tagRoutes }; 
+export { tagRoutes };
